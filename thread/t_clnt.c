@@ -21,6 +21,8 @@ typedef struct{
 
 DATA data;
 
+DATA own;
+
 int start = 0;
 
 	
@@ -69,14 +71,14 @@ void * send_msg(void * arg)   // send thread main
 
     // while(1) {if(start) break;}
 
-	data.who = T;
+	own.who = T;
 
 	while(1) 
 	{
-		write(sock, (void*)&data, sizeof(data));
-		data.t_col--;
-		data.t_row--;
-		sleep(1);
+		write(sock, (void*)&own, sizeof(own));
+		// data.t_col--;
+		// data.t_row--;
+		// sleep(0.3);
 	}
 	return NULL;
 }
@@ -90,8 +92,10 @@ void * recv_msg(void * arg)   // read thread main
 	while(1)
 	{
 		str_len = read(sock, (void*)&data, sizeof(data));
+		own.p_col=data.p_col;
+		own.p_row=data.p_row;
         start = 1;
-		sprintf(result, "t_row: %d, t_col: %d\np_row: %d, p_col: %d", data.t_row, data.t_col, data.p_row, data.p_col);
+		sprintf(result, "t_row: %d, t_col: %d\np_row: %d, p_col: %d", own.t_row, own.t_col, own.p_row, own.p_col);
 		fputs(result, stdout);
 		sleep(1);
 	}
