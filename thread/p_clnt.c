@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <curses.h>
 
 #include "map.h"
@@ -26,6 +27,7 @@ typedef struct{
 }DATA;
 
 DATA data;
+DATA own;
 
 // gameboard //
 /*----------------------*/
@@ -49,14 +51,19 @@ void setW();
 void * send_msg(void * arg);
 void * recv_msg(void * arg);
 void * gameBoard(void * arg);
+void * signal_msg(void *arg);
 void error_handling(char * msg);
 	
 	
 int main(int argc, char *argv[])
 {
 	int sock;
+	/*sigset_t newmask;
+	sigemptyset(&newmask);
+	sigaddset(&newmask, SIGALRM);
+	pthread_sigmask(SIG_BLOCK,&newmask, NULL);*/
 	struct sockaddr_in serv_addr;
-	pthread_t snd_thread, rcv_thread, gb_thread;
+	pthread_t snd_thread, rcv_thread, gb_thread, signal_thread;
 	void * thread_return;
 	if(argc!=3) {
 		printf("Usage : %s <IP> <port>\n", argv[0]);
@@ -74,6 +81,7 @@ int main(int argc, char *argv[])
 	if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1)
 		error_handling("connect() error");
 	
+	//pthread_create(&signal_thread, NULL, signal_msg, NULL);
 	pthread_create(&snd_thread, NULL, send_msg, (void*)&sock);
 	pthread_create(&rcv_thread, NULL, recv_msg, (void*)&sock);
 	pthread_create(&gb_thread, NULL, gameBoard, (void*)&sock);
@@ -82,6 +90,17 @@ int main(int argc, char *argv[])
 	pthread_join(gb_thread, &thread_return);
 	close(sock);  
 	return 0;
+}
+
+void *signal_msg(void *arg){
+	struct sigaction act;
+	sigset_t newmask;
+	sigemptyset(&newmask);
+	sigaddset(&newmask, SIGALRM);
+	act.sa_handler=move_msg;
+	sigaction(SIGALRM, &act, NULL);
+	pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
+	return NULL;
 }
 
 void * gameBoard(void * arg){
@@ -148,7 +167,7 @@ void * send_msg(void * arg)   // send thread main
 		data.p_col = col;
 		data.p_row = row;
 		write(sock, (void*)&data, sizeof(data));
-		sleep(1);
+		// sleep(0.3);
 	}
 	return NULL;
 }
