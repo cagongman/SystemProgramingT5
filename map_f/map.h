@@ -1,9 +1,9 @@
 #include <stdio.h>
 
 #define LEFTEDGE 0
-#define RIGHTEDGE 30
+#define RIGHTEDGE 70
 #define TOP 0
-#define BOTTOM 20
+#define BOTTOM 25
 
 char WALL[25][80];
 int wall[149][2] = {{4,6},{4,7},{4,8},{4,9},{4,11},{4,12},{4,13},{4,21},{4,22},{4,23},{4,24},

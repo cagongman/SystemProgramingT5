@@ -33,23 +33,23 @@ int set_ticker(int n_msecs){
 	return setitimer(ITIMER_REAL, &new_timeset, NULL);
 }
 void viewB(int r, int c){
-	r = r-1;
-	c = c-1;
+	r = r-2;
+	c = c-2;
 	move(r,c);
-	for(int i =0; i<3;i++){
-		for(int j=0; j<3;j++){
-			mvaddch(r+i,c+i, BLANK);
+	for(int i =0; i<5;i++){
+		for(int j=0; j<5;j++){
+			mvaddch(r+i,c+j, BLANK);
 		}
 	}
 }
 
 void viewW(int r, int c){
-	r = r-1;
-	c = c-1;
+	r = r-2;
+	c = c-2;
 	move(r,c);
-	for(int i = 0; i<3;i++){
-		for(int j=0;j<3;j++){
-			mvaddch(r+i,c+i, WALL[r+i][c+i]);
+	for(int i = 0; i<5;i++){
+		for(int j=0;j<5;j++){
+			mvaddch(r+i,c+j, WALL[r+i][c+j]);
 		}
 	}
 }
@@ -67,16 +67,16 @@ void move_msg(int signum){
 		r_dir = 0;
 	
 	move(row, col);
-	//viewB(row,col);
-	//move(row,col);
+	viewB(row,col);
+	move(row,col);
 	addch(BLANK);
 
 	row += r_dir;
 	col += c_dir;
 
 	move(row,col);
-	//viewW(row,col);
-	//move(row,col);
+	viewW(row,col);
+	move(row,col);
 	addch(symbol);
 	refresh();
 }
@@ -115,9 +115,6 @@ int main(){
 	c_dir = 0;
 	delay = 1000;
 	
-	for(int i=0;i<149;i++){
-		mvaddch(wall[i][0],wall[i][1],'*');
-	}
 	move(row,col);
 	addch(symbol);
 	signal(SIGALRM, move_msg);

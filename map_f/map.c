@@ -21,12 +21,12 @@ void set_up()
 	crmode();
 
 	move(0,0);
-	vline('*',25);
-	hline('*',80);
-	move(0,80);
-	vline('*',25);
-	move(25,0);
-	hline('*',81);
+	vline('*',23);
+	hline('*',78);
+	move(0,78);
+	vline('*',23);
+	move(23,0);
+	hline('*',79);
 	for(int i=0;i<149;i++){
 		mvaddch(wall[i][0],wall[i][1],'*');
 	}
