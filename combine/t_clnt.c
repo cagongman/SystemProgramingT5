@@ -27,6 +27,7 @@ typedef struct{
 	int t_row;
 	int t_col;
 	int who;
+	int win;
 }DATA;
 
 DATA data;
@@ -35,7 +36,7 @@ DATA own;
 // gameboard //
 /*----------------------*/
 int start = 0;
-
+int mis=0;
 char symbol;
 int ball_start_col = 20;
 int ball_start_row = 2;
@@ -60,6 +61,11 @@ void setM();
 void gauge(int);
 void minimap();
 void AvoidX(WINDOW *win);
+int AvoidX_keyboard(WINDOW *win);
+void move_x(int signum);
+void x_position(WINDOW *win,int row, int col, char x);
+int check_meet(int x, int y);
+void sideview();
 
 /*----------------------*/
 
@@ -130,8 +136,7 @@ void gameBoard(){
 	}
 	
 	symbol = 'T';
-	// ball_start_col = data.p_col;
-	// ball_start_row = data.p_row;
+
 	setW();
 	setM();
 
@@ -139,10 +144,13 @@ void gameBoard(){
 	crmode();
 	noecho();
 	curs_set(0);
+	start_color();
+	init_pair(2, COLOR_WHITE, COLOR_BLACK);
 	clear();
 
-	row = ball_start_row;
-	col = ball_start_col;
+	row=ball_start_row;
+	col=ball_start_col;
+
 	r_dir = 0;
 	c_dir = 0;
 	delay = 500;
@@ -154,7 +162,8 @@ void gameBoard(){
 	signal(SIGQUIT, SIG_IGN);
 	set_ticker( delay );
 	
-	window=subwin(stdscr,22,80,0,0);
+	window=subwin(stdscr,23,80,0,0);
+	sideview();
 	
 	while(true){
 		c = getch();
@@ -165,23 +174,35 @@ void gameBoard(){
 		if(c == 'm'){
 			if(MAP[row][col]=='M'){
 				clear();
+				signal(SIGALRM, SIG_IGN);
+				touchwin(window);
 				mission_num=rand()%3;
 				switch(mission_num){
 					case 0:
 						AvoidX(window);
-    					AvoidX_keyboard(window);
+    					mis+=AvoidX_keyboard(window);
 						break;
 					case 1:
 						result=FourOperation(window);
-    					FourOperation_keyboard(window,result);
+    					mis+=FourOperation_keyboard(window,result);
 						break;
 					case 2:
 						RockScissorPaper(window);
-						RockScissorPaper_keyboard(window);
+						mis+=RockScissorPaper_keyboard(window);
 						break;
 				}
+
+				touchwin(window);
+				wclear(window);
+				wrefresh(window);
 				delwin(window);
+				window=subwin(stdscr,23,80,0,0);
+				touchwin(stdscr);
+				clear();
+
 				signal(SIGALRM, move_msg);
+				set_ticker( delay );
+				wrefresh(stdscr);	
 			}
 		}
 		if(c == 'Q') break;
@@ -190,87 +211,11 @@ void gameBoard(){
 
 }
 
-/*void * gameBoard(void * arg){
-	int delay;
-	int ndelay;
-	int c, mission_num, result;
-	void move_msg(int);
-
-	while(1){ 
-		if(start){
-			printf("start!\n");
-			sleep(0.5);
-			break;
-		}
-	}
-	
-	symbol = 'T';
-	// ball_start_col = data.p_col;
-	// ball_start_row = data.p_row;
-	setW();
-	setM();
-
-	initscr();
-	crmode();
-	noecho();
-	curs_set(0);
-	clear();
-
-	row = ball_start_row;
-	col = ball_start_col;
-	r_dir = 0;
-	c_dir = 0;
-	delay = 500;
-	
-	srand(time(NULL));
-	move(row,col);
-	addch(symbol);
-	signal(SIGALRM, move_msg);
-	signal(SIGQUIT, SIG_IGN);
-	set_ticker( delay );
-	
-	window=subwin(stdscr,22,80,0,0);
-	
-	while(true){
-		c = getch();
-		if(c == 'w') {r_dir = -1; c_dir = 0;}
-		if(c == 's') {r_dir = 1; c_dir = 0;}
-		if(c == 'a') {c_dir = -1; r_dir = 0;}
-		if(c == 'd') {c_dir = 1; r_dir = 0;}
-		if(c == 'm'){
-			if(MAP[row][col]=='M'){
-				clear();
-				mission_num=rand()%3;
-				switch(mission_num){
-					case 0:
-						AvoidX(window);
-    					AvoidX_keyboard(window);
-						break;
-					case 1:
-						result=FourOperation(window);
-    					FourOperation_keyboard(window,result);
-						break;
-					case 2:
-						RockScissorPaper(window);
-						RockScissorPaper_keyboard(window);
-						break;
-				}
-				delwin(window);
-				signal(SIGALRM, move_msg);
-			}
-		}
-		if(c == 'Q') break;
-	}
-	endwin();
-	return 0;
-}*/
 	
 void * send_msg(void * arg)   // send thread main
 {
 	int sock=*((int*)arg);
 	int len;
-
-
 	own.who = T;
     col = ball_start_col;
     row = ball_start_row;
@@ -280,8 +225,7 @@ void * send_msg(void * arg)   // send thread main
 		own.t_col = col;
 		own.t_row = row;
 		write(sock, (void*)&own, sizeof(own));
-		sleep(0.5);
-		
+		sleep(0.5);	
 	}
 	return NULL;
 }
@@ -300,6 +244,19 @@ void * recv_msg(void * arg)   // read thread main
 		own.p_col = data.p_col;
 		own.p_row = data.p_row;
 
+		if(own.win!=-1){
+			if(own.win==P){
+				fail(stdscr);
+				sleep(2);
+				endwin();
+				exit(1);
+			}else if(own.win==T){
+				winner(stdscr);
+				sleep(2);
+				endwin();
+				exit(1);
+			}
+		}
 		MAP[past_r][past_c] = ' ';
 
 		past_r = data.p_row;
@@ -317,24 +274,6 @@ void error_handling(char *msg)
 	exit(1);
 }
 
-
-/*-----------------------------------------------------------------------------------*/
-
-
-int set_ticker(int n_msecs){
-	struct itimerval new_timeset;
-	long n_sec, n_usecs;
-
-	n_sec = n_msecs / 1000;
-	n_usecs = (n_msecs % 1000) * 1000L;
-
-	new_timeset.it_interval.tv_sec = n_sec;
-	new_timeset.it_interval.tv_usec = n_usecs;
-	new_timeset.it_value.tv_sec = n_sec;
-	new_timeset.it_value.tv_usec = n_usecs;
-
-	return setitimer(ITIMER_REAL, &new_timeset, NULL);
-}
 void viewB(int r, int c){
 	r = r-1;
 	c = c-1;
@@ -346,15 +285,17 @@ void viewB(int r, int c){
 	}
 }
 
-void viewM(int r, int c){
-	r = r - 1;
-	c = c - 1;
+void sideview(){
 	border('*','*','*','*','*','*','*','*');
 	move(0,46);
 	vline('*',24);
 	gauge(5);
 	minimap();
-
+}
+void viewM(int r, int c){
+	r = r - 1;
+	c = c - 1;
+	sideview();
 	move(r,c);
 	for(int i = 0; i < 3;i++){
 		for(int j=0;j < 3;j++){
@@ -389,7 +330,7 @@ void move_msg(int signum){
 	viewM(row,col);
 	move(row,col);
 	addch(symbol);
-	refresh();
+	wrefresh(stdscr);
 }
 
 void setW(){
@@ -432,7 +373,8 @@ void gauge(int mis){
 	move(3,54);
 	hline('/', 2*mis);
 
-	/*if (mis == 10) { theifwin }*/
+	if (mis >= 10)
+		own.win=T;
 }
 
 void minimap(){
@@ -445,25 +387,153 @@ void minimap(){
 	}
 }
 
-void AvoidX(WINDOW *win){
+void AvoidX(WINDOW *window){
     int i;
-    basic(win,"Avoid X", 3);
+    basic(window,"Avoid X", 3);
     for(i=4; i<20; i++)
-        movingcursor(win,i, 68, '#', 1);
-    mvwaddch(win,6,69,'F');
-    mvwaddch(win,7,69,'I');
-    mvwaddch(win,8,69,'N');
-    mvwaddch(win,9,69,'I');
-    mvwaddch(win,10,69,'S');
-    mvwaddch(win,11,69,'H');
-    mvwaddch(win,13,69,'L');
-    mvwaddch(win,14,69,'I');
-    mvwaddch(win,15,69,'N');
-    mvwaddch(win,16,69,'E');
-    wrefresh(win);
+        movingcursor(window,i, 68, '#', 1);
+    mvwaddch(window,6,69,'F');
+    mvwaddch(window,7,69,'I');
+    mvwaddch(window,8,69,'N');
+    mvwaddch(window,9,69,'I');
+    mvwaddch(window,10,69,'S');
+    mvwaddch(window,11,69,'H');
+    mvwaddch(window,13,69,'L');
+    mvwaddch(window,14,69,'I');
+    mvwaddch(window,15,69,'N');
+    mvwaddch(window,16,69,'E');
+    wrefresh(window);
 
-    x_position(win,mission_row, mission_col, 'X');
-    movingcursor(win,cursor_x, cursor_y, 'O',1);
+    x_position(window,mission_row, mission_col, 'X');
+    movingcursor(window,cursor_x, cursor_y, 'O',1);
     signal(SIGALRM, move_x);
-    set_ticker(1500);
+}
+
+int AvoidX_keyboard(WINDOW *window){
+    char c;
+
+    while(1){
+        c=wgetch(window);
+        if(c=='w' || c=='d' || c=='a' || c=='s')
+            movingcursor(window,cursor_x, cursor_y, BLANK,1);
+		if(c=='q')
+			break;
+		else if(c=='w'){
+			if(cursor_x>4)
+				cursor_x-=1;
+		}
+		else if(c=='d'){
+			if(cursor_y<69){
+				cursor_y+=1;
+			}
+			else if(cursor_y>=69){
+				movingcursor(window,cursor_x, cursor_y, BLANK, 1);
+                winner(window);
+                sleep(1);
+				return 5;
+                break;
+			}
+		}
+		else if(c=='a')
+			if(cursor_y>5){
+				cursor_y-=1;
+			}
+				
+		else if(c=='s'){
+			if(cursor_x<22){
+				cursor_x+=1;
+			}
+		}
+		if(c=='w' || c=='d' || c=='a' || c=='s')
+            movingcursor(window,cursor_x, cursor_y, 'O',1);
+
+	}
+}
+
+void x_position(WINDOW *window,int mission_row, int mission_col, char x){
+    int i;
+    static int meet=0;
+    mvwaddch(window, mission_row, mission_col, x);                                          
+
+    for(i=1; i<15; i=i+2){
+        movingcursor(window,mission_row-2, mission_col+(2*i)-6, x, 0);
+        if(check_meet(mission_row-2, mission_col+(2*i)-6)){
+            meet=1;
+            break;
+        }
+        movingcursor(window,mission_row+2, mission_col+(2*i)-6, x, 0);
+        if(check_meet(mission_row+2, mission_col+(2*i)-6)){
+            meet=1;
+            break;
+        }
+        movingcursor(window,mission_row-4, mission_col+(2*(i+1)-6), x, 0);
+        if(check_meet(mission_row-4, mission_col+(2*(i+1)-6))){
+            meet=1;
+            break;
+        }
+
+        movingcursor(window,mission_row, mission_col+(2*(i+1)-6), x, 0);
+        if(check_meet(mission_row, mission_col+(2*(i+1)-6))){
+            meet=1;
+            break;
+        }
+        movingcursor(window,mission_row+4, mission_col+(2*(i+1)-6), x, 0);
+        if(check_meet(mission_row+4, mission_col+(2*(i+1)-6))){
+            meet=1;
+            break;
+        }
+
+        if((i==5) || (i==9)){
+            movingcursor(window,mission_row+6, mission_col+(2*(i+1)-6), x, 0);
+            if(check_meet(mission_row+6, mission_col+(2*(i+1)-6))){
+                meet=1;
+                break;
+            }
+            movingcursor(window,mission_row-6, mission_col+(2*(i+1)-6), x, 0);
+            if(check_meet(mission_row-6, mission_col+(2*(i+1)-6))){
+                meet=1;
+                break;
+            }   
+        }
+
+        if(i==7){
+            movingcursor(window,mission_row+7, mission_col+(2*(i+1)-6), x, 0);
+            if(check_meet(mission_row+7, mission_col+(2*(i+1)-6))){
+                meet=1;
+                break;
+            }
+            movingcursor(window,mission_row-7, mission_col+(2*(i+1)-6), x, 0);
+            if(check_meet(mission_row-7, mission_col+(2*(i+1)-6))){
+                meet=1;
+                break;
+            }
+        }
+    }
+    if(meet){
+        fail(window);
+		sleep(1);
+    }
+	return;
+}
+
+// add to main code
+void move_x(int signum){
+    char x='X';
+    static int t=1;
+    signal(SIGALRM, move_x);
+    x_position(window, mission_row, mission_col, BLANK);
+    mission_col-=1;
+    if(t==1)
+        mission_row+=2;
+    else
+        mission_row-=2;
+    t*=-1;
+    x_position(window,mission_row, mission_col, x);
+    wrefresh(window);
+}
+
+int check_meet(int x, int y){
+    int res;
+    res=(x==cursor_x && y==cursor_y);
+    return res;
 }

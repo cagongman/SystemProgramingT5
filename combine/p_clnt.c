@@ -11,6 +11,7 @@
 #include <curses.h>
 #include <ncurses.h>
 
+#include "mission.h"
 #include "move.h"
 #include "minimap.h"
 	
@@ -26,6 +27,7 @@ typedef struct{
 	int t_row;
 	int t_col;
 	int who;
+	int win;
 }DATA;
 
 DATA data;
@@ -193,6 +195,19 @@ void * recv_msg(void * arg)   // read thread main
 		own.t_col = data.t_col;
 		own.t_row = data.t_row;
 
+		if(own.win!=-1){
+			if(own.win==T){
+				fail(stdscr);
+				sleep(2);
+				endwin();
+				exit(1);
+			}else if(own.win==P){
+				winner(stdscr);
+				sleep(2);
+				endwin();
+				exit(1);
+			}
+		}
 		MAP[past_r][past_c] = ' ';
 
 		past_r = data.t_row;
@@ -213,20 +228,6 @@ void error_handling(char *msg)
 
 /*-----------------------------------------------------------------------------------*/
 
-int set_ticker(int n_msecs){
-	struct itimerval new_timeset;
-	long n_sec, n_usecs;
-
-	n_sec = n_msecs / 1000;
-	n_usecs = (n_msecs % 1000) * 1000L;
-
-	new_timeset.it_interval.tv_sec = n_sec;
-	new_timeset.it_interval.tv_usec = n_usecs;
-	new_timeset.it_value.tv_sec = n_sec;
-	new_timeset.it_value.tv_usec = n_usecs;
-
-	return setitimer(ITIMER_REAL, &new_timeset, NULL);
-}
 void viewB(int r, int c){
 	r = r-2;
 	c = c-2;

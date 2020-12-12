@@ -470,7 +470,8 @@ void basic(WINDOW *win,char *mission, int p){
 
 void fail(WINDOW *win){
     int i,j;
-    clear();
+    touchwin(win)
+    wclear(win);
     //L
     for(i=8; i<=17; i++)
         movingcursor( win,i,25,'*', 0);
@@ -517,7 +518,8 @@ void fail(WINDOW *win){
 
 void winner(WINDOW *win){
     int i,j;
-    clear();
+    touchwin(win);
+    wclear(win);
     //W
     for(i=8; i<=13; i++){
         movingcursor(win,i,25,'*',0);

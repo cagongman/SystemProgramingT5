@@ -1,163 +1,7 @@
 #include<stdio.h>
 #include "mission.h"
-
 #define  LINE "***************************************************************"
 #define BLANK  ' '
-
-int mission_row, mission_col;
-int cursor_x, cursor_y;
-WINDOW *win;
-
-/*void AvoidX(WINDOW *win){
-    int i;
-    basic(win,"Avoid X", 3);
-    for(i=4; i<20; i++)
-        movingcursor(win,i, 68, '#', 1);
-    mvwaddch(win,6,69,'F');
-    mvwaddch(win,7,69,'I');
-    mvwaddch(win,8,69,'N');
-    mvwaddch(win,9,69,'I');
-    mvwaddch(win,10,69,'S');
-    mvwaddch(win,11,69,'H');
-    mvwaddch(win,13,69,'L');
-    mvwaddch(win,14,69,'I');
-    mvwaddch(win,15,69,'N');
-    mvwaddch(win,16,69,'E');
-    wrefresh(win);
-
-    x_position(win,mission_row, mission_col, 'X');
-    movingcursor(win,cursor_x, cursor_y, 'O',1);
-    signal(SIGALRM, move_x);
-    set_tickers(1500);
-}*/
-
-void AvoidX_keyboard(WINDOW *win){
-    char c;
-
-    while(1){
-        c=wgetch(win);
-        if(c=='w' || c=='d' || c=='a' || c=='s')
-            movingcursor(win,cursor_x, cursor_y, BLANK,1);
-        switch (c)
-        {
-        case 'q':
-            break;
-        case 'w':
-            if(cursor_x>4)
-                cursor_x-=1;  
-            break;
-        case 'd':
-            if(cursor_y<69)
-                cursor_y+=1;
-            if(cursor_y>=69){
-                movingcursor(win,cursor_x, cursor_y, BLANK, 1);
-                winner(win);
-                sleep(0.3);
-                break;
-                signal(SIGALRM, SIG_IGN);
-            }
-            break;
-        case 'a':
-            if(cursor_y>5)
-                cursor_y-=1;     
-            break;
-        case 's':
-            if(cursor_x<20)
-                cursor_x+=1;
-            break; 
-        default:
-            break;
-        }
-        if(c=='w' || c=='d' || c=='a' || c=='s')
-            movingcursor(win,cursor_x, cursor_y, 'O',1);
-      
-    }
-    delwin(win);
-}
-
-void x_position(WINDOW *win,int mission_row, int mission_col, char x){
-    int i;
-    static int meet=0;
-    mvwaddch(win, mission_row, mission_col, x);                                          
-
-    for(i=1; i<15; i=i+2){
-        movingcursor(win,mission_row-2, mission_col+(2*i)-6, x, 0);
-        if(check_meet(mission_row-2, mission_col+(2*i)-6)){
-            meet=1;
-            break;
-        }
-        movingcursor(win,mission_row+2, mission_col+(2*i)-6, x, 0);
-        if(check_meet(mission_row+2, mission_col+(2*i)-6)){
-            meet=1;
-            break;
-        }
-        movingcursor(win,mission_row-4, mission_col+(2*(i+1)-6), x, 0);
-        if(check_meet(mission_row-4, mission_col+(2*(i+1)-6))){
-            meet=1;
-            break;
-        }
-
-        movingcursor(win,mission_row, mission_col+(2*(i+1)-6), x, 0);
-        if(check_meet(mission_row, mission_col+(2*(i+1)-6))){
-            meet=1;
-            break;
-        }
-        movingcursor(win,mission_row+4, mission_col+(2*(i+1)-6), x, 0);
-        if(check_meet(mission_row+4, mission_col+(2*(i+1)-6))){
-            meet=1;
-            break;
-        }
-
-        if((i==5) || (i==9)){
-            movingcursor(win,mission_row+6, mission_col+(2*(i+1)-6), x, 0);
-            if(check_meet(mission_row+6, mission_col+(2*(i+1)-6))){
-                meet=1;
-                break;
-            }
-            movingcursor(win,mission_row-6, mission_col+(2*(i+1)-6), x, 0);
-            if(check_meet(mission_row-6, mission_col+(2*(i+1)-6))){
-                meet=1;
-                break;
-            }   
-        }
-
-        if(i==7){
-            movingcursor(win,mission_row+7, mission_col+(2*(i+1)-6), x, 0);
-            if(check_meet(mission_row+7, mission_col+(2*(i+1)-6))){
-                meet=1;
-                break;
-            }
-            movingcursor(win,mission_row-7, mission_col+(2*(i+1)-6), x, 0);
-            if(check_meet(mission_row-7, mission_col+(2*(i+1)-6))){
-                meet=1;
-                break;
-            }
-        }
-    }
-    if(meet){
-        fail(win);
-        signal(SIGALRM, SIG_IGN);
-        //return;
-    }
-        
-    wrefresh(win);
-}
-
-// add to main code
-void move_x(int signum){
-    char x='X';
-    static int t=1;
-    signal(SIGALRM, move_x);
-    x_position(win,mission_row, mission_col, BLANK);
-    mission_col-=1;
-    if(t==1)
-        mission_row+=2;
-    else
-        mission_row-=2;
-    t*=-1;
-    x_position(win,mission_row, mission_col, x);
-    wrefresh(win);
-}
 
 void movingcursor(WINDOW *win,int x, int y, char c, int refresh){
     
@@ -166,14 +10,6 @@ void movingcursor(WINDOW *win,int x, int y, char c, int refresh){
         wrefresh(win);
 }
 
-int check_meet(int x, int y){
-    int res;
-    res=(x==cursor_x && y==cursor_y);
-    return res;
-}
-
-/* Mission: FourOperation
-*/
 int FourOperation(WINDOW *win){
     char c;
     char str[3];
@@ -220,7 +56,7 @@ int FourOperation(WINDOW *win){
     return result;
 }
  
-void FourOperation_keyboard(WINDOW *win, int result){
+int FourOperation_keyboard(WINDOW *win, int result){
     int num;
     curs_set(1);
     echo();
@@ -230,12 +66,16 @@ void FourOperation_keyboard(WINDOW *win, int result){
     wscanw(win,"%d", &num);
     noecho();
     curs_set(0);
-    if(num==result)
-        winner(win);
-    else
+    if(num==result){
+         winner(win);
+         sleep(1);
+         return 2;
+    }
+    else{
         fail(win); 
-    sleep(0.3);
-    delwin(win);
+        sleep(1);
+        return 0;
+    }
 }
 
 /* 
@@ -248,7 +88,7 @@ void RockScissorPaper(WINDOW *win){
     draw_rcp(win);
 }
 
-void RockScissorPaper_keyboard(WINDOW *win){
+int RockScissorPaper_keyboard(WINDOW *win){
     char c;
     int result, cur=1, win_result;
     srand(time(NULL));
@@ -284,12 +124,14 @@ void RockScissorPaper_keyboard(WINDOW *win){
             if(win_result==-1){
                 sleep(1);
                 fail(win);
-                break;
+                sleep(1);
+                return 0;
             }
             else if(win_result==1){
                 sleep(1);
                 winner(win);
-                break;
+                sleep(1);
+                return 3;
             }
             else if(win_result==2){
                 mvwaddstr(win,10,32,"Same! Try Aagin!");
@@ -298,11 +140,7 @@ void RockScissorPaper_keyboard(WINDOW *win){
         }
     }
     if(c=='q'){
-        delwin(win);
-    }
-    else{
-        sleep(0.5);
-        delwin(win);
+        return 0;
     }
 }
 
@@ -418,7 +256,8 @@ void basic(WINDOW *win,char *mission, int p){
 
 void fail(WINDOW *win){
     int i,j;
-    clear();
+    touchwin(win);
+    wclear(win);
     //L
     for(i=8; i<=17; i++)
         movingcursor( win,i,25,'*', 0);
@@ -465,7 +304,8 @@ void fail(WINDOW *win){
 
 void winner(WINDOW *win){
     int i,j;
-    clear();
+    touchwin(win);
+    wclear(win);
     //W
     for(i=8; i<=13; i++){
         movingcursor(win,i,25,'*',0);
@@ -500,7 +340,7 @@ void winner(WINDOW *win){
     wrefresh(win);
 }
 
-int set_tickers(int n_msecs){
+int set_ticker(int n_msecs){
     struct itimerval timer;
     long n_sec, n_usec;
     
