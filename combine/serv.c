@@ -18,6 +18,7 @@ typedef struct {
 	int p_col;
 	int t_row;
 	int t_col;
+	int win;
 	int who;
 	int win;
 	int mis_gauge;
@@ -123,13 +124,21 @@ void send_msg(DATA data, int len, int clnt_sock)   // send to all
 		admin.who = P;
 		admin.p_col = data.p_col;
 		admin.p_row = data.p_row;
+<<<<<<< Updated upstream
 		admin.win=data.win;
+=======
+		admin.win = data.win;
+>>>>>>> Stashed changes
 	}else if(data.who == T){
 		admin.who = T;
 		admin.t_col = data.t_col;
 		admin.t_row = data.t_row;
+<<<<<<< Updated upstream
 		admin.mis_gauge=data.mis_gauge;
 		admin.win=data.win;
+=======
+		admin.win = data.win;
+>>>>>>> Stashed changes
 	}
 	write(clnt_sock, (void*)&admin, sizeof(admin));	
 		

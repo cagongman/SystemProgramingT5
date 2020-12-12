@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	own.mis_gauge=0;
 	start_point();
 	sock=socket(PF_INET, SOCK_STREAM, 0);
-	
+	own.win = -1;
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family=AF_INET;
 	serv_addr.sin_addr.s_addr=inet_addr(argv[1]);

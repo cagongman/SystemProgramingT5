@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	start_point();
 
 	sock=socket(PF_INET, SOCK_STREAM, 0);
-	
+	own.win = -1;
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family=AF_INET;
 	serv_addr.sin_addr.s_addr=inet_addr(argv[1]);
@@ -307,10 +307,15 @@ void viewM(int r, int c){
 	for(int i = 0; i < 3;i++){
 		for(int j=0;j < 3;j++){
 			mvaddch(r+i,c+j, MAP[r+i][c+j]);
+<<<<<<< Updated upstream
 			if(MAP[r+i][c+j] == 'P'){
 				own.win=P;
 			}
 				
+=======
+			if(MAP[r+i][c+j] == 'P')
+				own.win = P;
+>>>>>>> Stashed changes
 		}
 	}
 }
@@ -529,7 +534,7 @@ void x_position(WINDOW *window,int mission_row, int mission_col, char x){
         }
 		
     }
-	return;
+	
 }
 
 // add to main code
