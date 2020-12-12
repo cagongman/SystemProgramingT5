@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <stdlib.h>
-#include "map.h"
+#include "newmap.h"
 
 #define BLANK ' '
 
@@ -43,13 +43,13 @@ void viewB(int r, int c){
 	}
 }
 
-void viewW(int r, int c){
+void viewM(int r, int c){
 	r = r-2;
 	c = c-2;
 	move(r,c);
 	for(int i = 0; i<5;i++){
 		for(int j=0;j<5;j++){
-			mvaddch(r+i,c+j, WALL[r+i][c+j]);
+			mvaddch(r+i,c+j, MAP[r+i][c+j]);
 		}
 	}
 }
@@ -57,13 +57,13 @@ void viewW(int r, int c){
 void move_msg(int signum){
 	signal(SIGALRM, move_msg);
 	
-	if (c_dir == -1 && WALL[row][col - 1] != ' ')
+	if (c_dir == -1 && MAP[row][col - 1] == '*')
 		c_dir = 0;
-	if(c_dir == 1 && WALL[row][col + 1] != ' ')
+	if(c_dir == 1 && MAP[row][col + 1] == '*')
 		c_dir = 0;
-	if(r_dir == -1 && WALL[row - 1][col] != ' ')
+	if(r_dir == -1 && MAP[row - 1][col] == '*')
 		r_dir = 0;
-	if(r_dir == 1 && WALL[row + 1][col] != ' ')
+	if(r_dir == 1 && MAP[row + 1][col] == '*')
 		r_dir = 0;
 	
 	move(row, col);
@@ -75,7 +75,7 @@ void move_msg(int signum){
 	col += c_dir;
 
 	move(row,col);
-	viewW(row,col);
+	viewM(row,col);
 	move(row,col);
 	addch(symbol);
 	refresh();
@@ -83,14 +83,26 @@ void move_msg(int signum){
 
 void setW(){
 	for(int i=0;i<25;i++){
-		for(int j=0;j<80;j++){
-			WALL[i][j] = ' ';
+		for(int j=0;j<47;j++){
+			MAP[i][j] = ' ';
 		}
+		MAP[i][0] = '*';
+		MAP[i][46] = '*';
 	}
-	for(int i=0;i<149;i++){
+	for(int i=0;i<47;i++){
+		MAP[0][i] = '*';
+		MAP[24][i] = '*';
+	}
+	for(int i=0;i<260;i++){
 		int r = wall[i][0];
 		int c = wall[i][1];
-		WALL[r][c] = '*';
+		MAP[r][c] = '*';
+	}
+}
+
+void setM(){
+	for(int i=0;i<6;i++){
+		MAP[mission[i][0]][mission[i][1]] = 'M';
 	}
 }
 
@@ -100,10 +112,12 @@ int main(){
 	int c;
 	void move_msg(int);
 	
-	symbol = 'k';
-	ball_start_col = 1;
-	ball_start_row = 1;
+	symbol = 'P';
+	ball_start_col = 2;
+	ball_start_row = 2;
 	setW();
+	setM();
+
 	initscr();
 	crmode();
 	noecho();
