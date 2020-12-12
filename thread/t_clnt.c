@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <curses.h>
+#include <ncurses.h>
 
 #include "newmap.h"
 	
@@ -117,14 +118,13 @@ void * gameBoard(void * arg){
 	}
 	
 	symbol = 'T';
-	ball_start_col = data.p_col;
-	ball_start_row = data.p_row;
 	setW();
 	setM();
 
 	initscr();
 	crmode();
 	noecho();
+	curs_set(0);
 	clear();
 
 	row = ball_start_row;
@@ -187,14 +187,12 @@ void * recv_msg(void * arg)   // read thread main
 		own.p_col = data.p_col;
 		own.p_row = data.p_row;
 
-		move(past_r, past_c);
-		addch(BLANK);
+		MAP[past_r][past_c] = ' ';
 
 		past_r = data.p_row;
 		past_c = data.p_col;
 
-		move(data.p_row, data.p_col);
-		addch('P');
+		MAP[past_r][past_c] = 'P';
 	}
 	return NULL;
 }
