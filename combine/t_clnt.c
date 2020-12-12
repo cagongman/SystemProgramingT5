@@ -11,6 +11,7 @@
 #include <curses.h>
 #include <ncurses.h>
 
+#include "mission.h"
 #include "move.h"
 #include "minimap.h"
 	
@@ -44,6 +45,12 @@ int col;
 int r_dir;
 int c_dir;
 
+int mission_row=11;
+int mission_col=45;
+int cursor_x=11;
+int cursor_y=33;
+WINDOW *window;
+
 int set_ticker(int);
 void viewB(int, int);
 void viewM(int, int);
@@ -52,13 +59,15 @@ void setW();
 void setM();
 void gauge(int);
 void minimap();
+void AvoidX(WINDOW *win);
 
 /*----------------------*/
 
 
 void * send_msg(void * arg);
 void * recv_msg(void * arg);
-void * gameBoard(void * arg);
+//void * gameBoard(void * arg);
+void gameBoard();
 void * signal_msg(void *arg);
 void error_handling(char * msg);
 	
@@ -74,7 +83,6 @@ int main(int argc, char *argv[])
 		exit(1);
 	 }
 
-	
 	sock=socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&serv_addr, 0, sizeof(serv_addr));
@@ -87,10 +95,11 @@ int main(int argc, char *argv[])
 	
 	pthread_create(&snd_thread, NULL, send_msg, (void*)&sock);
 	pthread_create(&rcv_thread, NULL, recv_msg, (void*)&sock);
-	pthread_create(&gb_thread, NULL, gameBoard, (void*)&sock);
+	gameBoard();
+	//pthread_create(&gb_thread, NULL, gameBoard, (void*)&sock);
 	pthread_join(snd_thread, &thread_return);
 	pthread_join(rcv_thread, &thread_return);
-	pthread_join(gb_thread, &thread_return);
+	//pthread_join(gb_thread, &thread_return);
 	close(sock);  
 	return 0;
 }
@@ -106,10 +115,10 @@ void *signal_msg(void *arg){
 	return NULL;
 }
 
-void * gameBoard(void * arg){
+void gameBoard(){
 	int delay;
 	int ndelay;
-	int c;
+	int c, mission_num, result;
 	void move_msg(int);
 
 	while(1){ 
@@ -138,12 +147,14 @@ void * gameBoard(void * arg){
 	c_dir = 0;
 	delay = 500;
 	
+	srand(time(NULL));
 	move(row,col);
 	addch(symbol);
 	signal(SIGALRM, move_msg);
 	signal(SIGQUIT, SIG_IGN);
 	set_ticker( delay );
 	
+	window=subwin(stdscr,22,80,0,0);
 	
 	while(true){
 		c = getch();
@@ -151,11 +162,108 @@ void * gameBoard(void * arg){
 		if(c == 's') {r_dir = 1; c_dir = 0;}
 		if(c == 'a') {c_dir = -1; r_dir = 0;}
 		if(c == 'd') {c_dir = 1; r_dir = 0;}
+		if(c == 'm'){
+			if(MAP[row][col]=='M'){
+				clear();
+				mission_num=rand()%3;
+				switch(mission_num){
+					case 0:
+						AvoidX(window);
+    					AvoidX_keyboard(window);
+						break;
+					case 1:
+						result=FourOperation(window);
+    					FourOperation_keyboard(window,result);
+						break;
+					case 2:
+						RockScissorPaper(window);
+						RockScissorPaper_keyboard(window);
+						break;
+				}
+				delwin(window);
+				signal(SIGALRM, move_msg);
+			}
+		}
+		if(c == 'Q') break;
+	}
+	endwin();
+
+}
+
+/*void * gameBoard(void * arg){
+	int delay;
+	int ndelay;
+	int c, mission_num, result;
+	void move_msg(int);
+
+	while(1){ 
+		if(start){
+			printf("start!\n");
+			sleep(0.5);
+			break;
+		}
+	}
+	
+	symbol = 'T';
+	// ball_start_col = data.p_col;
+	// ball_start_row = data.p_row;
+	setW();
+	setM();
+
+	initscr();
+	crmode();
+	noecho();
+	curs_set(0);
+	clear();
+
+	row = ball_start_row;
+	col = ball_start_col;
+	r_dir = 0;
+	c_dir = 0;
+	delay = 500;
+	
+	srand(time(NULL));
+	move(row,col);
+	addch(symbol);
+	signal(SIGALRM, move_msg);
+	signal(SIGQUIT, SIG_IGN);
+	set_ticker( delay );
+	
+	window=subwin(stdscr,22,80,0,0);
+	
+	while(true){
+		c = getch();
+		if(c == 'w') {r_dir = -1; c_dir = 0;}
+		if(c == 's') {r_dir = 1; c_dir = 0;}
+		if(c == 'a') {c_dir = -1; r_dir = 0;}
+		if(c == 'd') {c_dir = 1; r_dir = 0;}
+		if(c == 'm'){
+			if(MAP[row][col]=='M'){
+				clear();
+				mission_num=rand()%3;
+				switch(mission_num){
+					case 0:
+						AvoidX(window);
+    					AvoidX_keyboard(window);
+						break;
+					case 1:
+						result=FourOperation(window);
+    					FourOperation_keyboard(window,result);
+						break;
+					case 2:
+						RockScissorPaper(window);
+						RockScissorPaper_keyboard(window);
+						break;
+				}
+				delwin(window);
+				signal(SIGALRM, move_msg);
+			}
+		}
 		if(c == 'Q') break;
 	}
 	endwin();
 	return 0;
-}
+}*/
 	
 void * send_msg(void * arg)   // send thread main
 {
@@ -335,4 +443,27 @@ void minimap(){
 	for(int i=0;i<6;i++){
 		mvaddch(minimisson[i][0]+5,minimisson[i][1]+48,'M');
 	}
+}
+
+void AvoidX(WINDOW *win){
+    int i;
+    basic(win,"Avoid X", 3);
+    for(i=4; i<20; i++)
+        movingcursor(win,i, 68, '#', 1);
+    mvwaddch(win,6,69,'F');
+    mvwaddch(win,7,69,'I');
+    mvwaddch(win,8,69,'N');
+    mvwaddch(win,9,69,'I');
+    mvwaddch(win,10,69,'S');
+    mvwaddch(win,11,69,'H');
+    mvwaddch(win,13,69,'L');
+    mvwaddch(win,14,69,'I');
+    mvwaddch(win,15,69,'N');
+    mvwaddch(win,16,69,'E');
+    wrefresh(win);
+
+    x_position(win,mission_row, mission_col, 'X');
+    movingcursor(win,cursor_x, cursor_y, 'O',1);
+    signal(SIGALRM, move_x);
+    set_ticker(1500);
 }
