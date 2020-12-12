@@ -28,6 +28,7 @@ typedef struct{
 	int t_col;
 	int who;
 	int win;
+	int mis_gauge;
 }DATA;
 
 DATA data;
@@ -38,8 +39,8 @@ DATA own;
 int start = 0;
 
 char symbol;
-int ball_start_col = 2;
-int ball_start_row = 2;
+int ball_start_col;
+int ball_start_row;
 
 int row;
 int col;
@@ -54,17 +55,17 @@ void setW();
 void setM();
 void gauge(int);
 void minimap();
-
+void start_point();
 /*----------------------*/
 
 
 void * send_msg(void * arg);
 void * recv_msg(void * arg);
-void * gameBoard(void * arg);
+void gameBoard();
 void * signal_msg(void *arg);
 void error_handling(char * msg);
 	
-	
+int mis=0;
 int main(int argc, char *argv[])
 {
 	int sock;
@@ -76,7 +77,9 @@ int main(int argc, char *argv[])
 		exit(1);
 	 }
 
-	
+	own.win=-1;
+	own.mis_gauge=0;
+	start_point();
 	sock=socket(PF_INET, SOCK_STREAM, 0);
 	
 	memset(&serv_addr, 0, sizeof(serv_addr));
@@ -90,10 +93,11 @@ int main(int argc, char *argv[])
 	//pthread_create(&signal_thread, NULL, signal_msg, NULL);
 	pthread_create(&snd_thread, NULL, send_msg, (void*)&sock);
 	pthread_create(&rcv_thread, NULL, recv_msg, (void*)&sock);
-	pthread_create(&gb_thread, NULL, gameBoard, (void*)&sock);
+	gameBoard();
+	//pthread_create(&gb_thread, NULL, gameBoard, (void*)&sock);
 	pthread_join(snd_thread, &thread_return);
 	pthread_join(rcv_thread, &thread_return);
-	pthread_join(gb_thread, &thread_return);
+	//pthread_join(gb_thread, &thread_return);
 	close(sock);  
 	return 0;
 }
@@ -109,7 +113,7 @@ void *signal_msg(void *arg){
 	return NULL;
 }
 
-void * gameBoard(void * arg){
+void gameBoard(){
 	int delay;
 	int ndelay;
 	int c;
@@ -124,8 +128,7 @@ void * gameBoard(void * arg){
 	}
 	
 	symbol = 'P';
-	// ball_start_col = data.p_col;
-	// ball_start_row = data.p_row;
+
 	setW();
 	setM();
 
@@ -157,7 +160,7 @@ void * gameBoard(void * arg){
 		if(c == 'Q') break;
 	}
 	endwin();
-	return 0;
+	exit(1);
 }
 	
 void * send_msg(void * arg)   // send thread main
@@ -194,18 +197,19 @@ void * recv_msg(void * arg)   // read thread main
 		start = 1;
 		own.t_col = data.t_col;
 		own.t_row = data.t_row;
+		own.mis_gauge=data.mis_gauge;
+		own.win=data.win;
 
 		if(own.win!=-1){
+			signal(SIGALRM,SIG_IGN);
 			if(own.win==T){
+				clear();
 				fail(stdscr);
-				sleep(2);
-				endwin();
-				exit(1);
+				break;
 			}else if(own.win==P){
+				clear();
 				winner(stdscr);
-				sleep(2);
-				endwin();
-				exit(1);
+				break;
 			}
 		}
 		MAP[past_r][past_c] = ' ';
@@ -245,7 +249,7 @@ void viewM(int r, int c){
 	border('*','*','*','*','*','*','*','*');
 	move(0,46);
 	vline('*',24);
-	gauge(5);
+	gauge(own.mis_gauge);
 	minimap();
 
 	move(r,c);
@@ -301,6 +305,14 @@ void setW(){
 		int c = wall[i][1];
 		MAP[r][c] = '*';
 	}
+}
+
+void start_point(){
+	int n;
+	srand(time(NULL));
+	n=(rand()%23)+1;
+	ball_start_row=n;
+	ball_start_col=44;
 }
 
 void setM(){

@@ -19,6 +19,8 @@ typedef struct {
 	int t_row;
 	int t_col;
 	int who;
+	int win;
+	int mis_gauge;
 }DATA;
 
 DATA admin;
@@ -56,10 +58,6 @@ int main(int argc, char *argv[])
 	if(listen(serv_sock, 5)==-1)
 		error_handling("listen() error");
 
-	// admin.p_col = 0;
-	// admin.p_row = 0;
-	// admin.t_col = 10;
-	// admin.t_row = 0;
 	
 	while(1)
 	{
@@ -74,6 +72,10 @@ int main(int argc, char *argv[])
 		pthread_detach(t_id);
 		printf("Connected client IP: %s , clnt_sock=%d\n", inet_ntoa(clnt_adr.sin_addr), clnt_sock);
 	}
+	if(admin.win==T)
+		printf("At last,the Thief stole money!\n");
+	else if(admin.win==P)
+		printf("At last,the Police caught bad thief!\n");
 	close(serv_sock);
 	return 0;
 }
@@ -121,17 +123,18 @@ void send_msg(DATA data, int len, int clnt_sock)   // send to all
 		admin.who = P;
 		admin.p_col = data.p_col;
 		admin.p_row = data.p_row;
+		admin.win=data.win;
 	}else if(data.who == T){
 		admin.who = T;
 		admin.t_col = data.t_col;
 		admin.t_row = data.t_row;
+		admin.mis_gauge=data.mis_gauge;
+		admin.win=data.win;
 	}
-	write(clnt_sock, (void*)&admin, sizeof(admin));
-	printf("t_row: %d, t_col: %d   p_row: %d, p_col: %d\n", admin.t_row, admin.t_col, admin.p_row, admin.p_col);
+	write(clnt_sock, (void*)&admin, sizeof(admin));	
 		
 	pthread_mutex_unlock(&mutx);
 }
-
 
 void error_handling(char * msg)
 {

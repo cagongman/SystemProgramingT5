@@ -28,6 +28,7 @@ typedef struct{
 	int t_col;
 	int who;
 	int win;
+	int mis_gauge;
 }DATA;
 
 DATA data;
@@ -37,9 +38,10 @@ DATA own;
 /*----------------------*/
 int start = 0;
 int mis=0;
+int meet=0;
 char symbol;
-int ball_start_col = 20;
-int ball_start_row = 2;
+int ball_start_col;
+int ball_start_row;
 
 int row;
 int col;
@@ -65,7 +67,7 @@ int AvoidX_keyboard(WINDOW *win);
 void move_x(int signum);
 void x_position(WINDOW *win,int row, int col, char x);
 int check_meet(int x, int y);
-void sideview();
+void start_point();
 
 /*----------------------*/
 
@@ -88,6 +90,10 @@ int main(int argc, char *argv[])
 		printf("Usage : %s <IP> <port>\n", argv[0]);
 		exit(1);
 	 }
+
+	own.win=-1;
+	own.mis_gauge=0;
+	start_point();
 
 	sock=socket(PF_INET, SOCK_STREAM, 0);
 	
@@ -163,7 +169,6 @@ void gameBoard(){
 	set_ticker( delay );
 	
 	window=subwin(stdscr,23,80,0,0);
-	sideview();
 	
 	while(true){
 		c = getch();
@@ -173,12 +178,16 @@ void gameBoard(){
 		if(c == 'd') {c_dir = 1; r_dir = 0;}
 		if(c == 'm'){
 			if(MAP[row][col]=='M'){
+				MAP[row][col]=BLANK;
 				clear();
 				signal(SIGALRM, SIG_IGN);
 				touchwin(window);
-				mission_num=rand()%3;
+				//mission_num=rand()%3;
+				mission_num = 0;
 				switch(mission_num){
 					case 0:
+						/*mission_row=11; mission_col=45;
+						cursor_x=11; cursor_y=33;*/
 						AvoidX(window);
     					mis+=AvoidX_keyboard(window);
 						break;
@@ -224,6 +233,7 @@ void * send_msg(void * arg)   // send thread main
 	{
 		own.t_col = col;
 		own.t_row = row;
+		own.mis_gauge=mis;
 		write(sock, (void*)&own, sizeof(own));
 		sleep(0.5);	
 	}
@@ -243,18 +253,18 @@ void * recv_msg(void * arg)   // read thread main
 		start = 1;
 		own.p_col = data.p_col;
 		own.p_row = data.p_row;
+		own.win=data.win;
 
 		if(own.win!=-1){
+			signal(SIGALRM,SIG_IGN);
 			if(own.win==P){
+				clear();
 				fail(stdscr);
-				sleep(2);
-				endwin();
-				exit(1);
+				break;	
 			}else if(own.win==T){
+				clear();
 				winner(stdscr);
-				sleep(2);
-				endwin();
-				exit(1);
+				break;
 			}
 		}
 		MAP[past_r][past_c] = ' ';
@@ -285,23 +295,22 @@ void viewB(int r, int c){
 	}
 }
 
-void sideview(){
-	border('*','*','*','*','*','*','*','*');
-	move(0,46);
-	vline('*',24);
-	gauge(5);
-	minimap();
-}
 void viewM(int r, int c){
 	r = r - 1;
 	c = c - 1;
-	sideview();
+	border('*','*','*','*','*','*','*','*');
+	move(0,46);
+	vline('*',24);
+	gauge(mis);
+	minimap();
 	move(r,c);
 	for(int i = 0; i < 3;i++){
 		for(int j=0;j < 3;j++){
 			mvaddch(r+i,c+j, MAP[r+i][c+j]);
-			if(MAP[r+i][c+j] == 'P')
-				symbol = 'Z';
+			if(MAP[r+i][c+j] == 'P'){
+				own.win=P;
+			}
+				
 		}
 	}
 }
@@ -358,6 +367,14 @@ void setM(){
 	}
 }
 
+void start_point(){
+	int n;
+	srand(time(NULL));
+	n=(rand()%23)+1;
+	ball_start_row=20;
+	ball_start_col=2;
+}
+
 void gauge(int mis){
 	move(1,56);
 	addstr("!Mission Gauge!");
@@ -411,9 +428,13 @@ void AvoidX(WINDOW *window){
 
 int AvoidX_keyboard(WINDOW *window){
     char c;
-
     while(1){
         c=wgetch(window);
+		if(meet==1){
+			fail(window);
+			sleep(1);
+			return 0;
+		}
         if(c=='w' || c=='d' || c=='a' || c=='s')
             movingcursor(window,cursor_x, cursor_y, BLANK,1);
 		if(c=='q')
@@ -434,15 +455,14 @@ int AvoidX_keyboard(WINDOW *window){
                 break;
 			}
 		}
-		else if(c=='a')
+		else if(c=='a'){
 			if(cursor_y>5){
 				cursor_y-=1;
 			}
-				
+		}
 		else if(c=='s'){
-			if(cursor_x<22){
+			if(cursor_x<22)
 				cursor_x+=1;
-			}
 		}
 		if(c=='w' || c=='d' || c=='a' || c=='s')
             movingcursor(window,cursor_x, cursor_y, 'O',1);
@@ -451,8 +471,7 @@ int AvoidX_keyboard(WINDOW *window){
 }
 
 void x_position(WINDOW *window,int mission_row, int mission_col, char x){
-    int i;
-    static int meet=0;
+    int i; 
     mvwaddch(window, mission_row, mission_col, x);                                          
 
     for(i=1; i<15; i=i+2){
@@ -508,10 +527,7 @@ void x_position(WINDOW *window,int mission_row, int mission_col, char x){
                 break;
             }
         }
-    }
-    if(meet){
-        fail(window);
-		sleep(1);
+		
     }
 	return;
 }
