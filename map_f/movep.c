@@ -1,22 +1,47 @@
-#include <stdio.h>
-#include <string.h>
-#include <curses.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <signal.h>
-#include <stdlib.h>
-#include "newmap.h"
+#include "move.h"
+#include "minimap.h"
 
-#define BLANK ' '
+int main(){
+	int delay;
+	int ndelay;
+	int c;
+	void move_msg(int);
+	
+	symbol = 'P';
+	ball_start_col = 2;
+	ball_start_row = 2;
+	setW();
+	setM();
 
-char symbol;
-int ball_start_col;
-int ball_start_row;
+	initscr();
+	crmode();
+	noecho();
+	clear();
 
-int row;
-int col;
-int r_dir;
-int c_dir;
+	row = ball_start_row;
+	col = ball_start_col;
+	r_dir = 0;
+	c_dir = 0;
+	delay = 500;
+	
+	move(row,col);
+	addch(symbol);
+	signal(SIGALRM, move_msg);
+	signal(SIGQUIT, SIG_IGN);
+	set_ticker( delay );
+	
+	
+	while(true){
+		c = getch();
+		if(c == 'w') {r_dir = -1; c_dir = 0;}
+		if(c == 's') {r_dir = 1; c_dir = 0;}
+		if(c == 'a') {c_dir = -1; r_dir = 0;}
+		if(c == 'd') {c_dir = 1; r_dir = 0;}
+		if(c == 'Q') break;
+	}
+	endwin();
+	return 0;
+}
 
 int set_ticker(int n_msecs){
 	struct itimerval new_timeset;
@@ -49,6 +74,9 @@ void viewM(int r, int c){
 	border('*','*','*','*','*','*','*','*');
 	move(0,46);
 	vline('*',24);
+	gauge(5);
+	minimap();
+
 	move(r,c);
 	for(int i = 0; i<5;i++){
 		for(int j=0;j<5;j++){
@@ -110,44 +138,31 @@ void setM(){
 	}
 }
 
-int main(){
-	int delay;
-	int ndelay;
-	int c;
-	void move_msg(int);
-	
-	symbol = 'P';
-	ball_start_col = 2;
-	ball_start_row = 2;
-	setW();
-	setM();
+void gauge(int mis){
+	move(1,56);
+	addstr("!Mission Gauge!");
+	move(2,53);
+	hline('+', 21);
+	vline('+', 3);
+	move(2,73);
+	vline('+', 3);
+	move(4,53);
+	hline('+', 21);
+	move(6,47);
+	hline('*',32);
+	move(3,54);
+	hline('/', 2*mis);
 
-	initscr();
-	crmode();
-	noecho();
-	clear();
-
-	row = ball_start_row;
-	col = ball_start_col;
-	r_dir = 0;
-	c_dir = 0;
-	delay = 500;
-	
-	move(row,col);
-	addch(symbol);
-	signal(SIGALRM, move_msg);
-	signal(SIGQUIT, SIG_IGN);
-	set_ticker( delay );
-	
-	
-	while(true){
-		c = getch();
-		if(c == 'w') {r_dir = -1; c_dir = 0;}
-		if(c == 's') {r_dir = 1; c_dir = 0;}
-		if(c == 'a') {c_dir = -1; r_dir = 0;}
-		if(c == 'd') {c_dir = 1; r_dir = 0;}
-		if(c == 'Q') break;
-	}
-	endwin();
-	return 0;
+	/*if (mis == 10) { theifwin }*/
 }
+
+void minimap(){
+	for(int i=0;i<161;i++){
+		mvaddch(miniwall[i][0]+5,miniwall[i][1]+48,'*');
+	}
+	
+	for(int i=0;i<6;i++){
+		mvaddch(minimisson[i][0]+5,minimisson[i][1]+48,'M');
+	}
+}
+
