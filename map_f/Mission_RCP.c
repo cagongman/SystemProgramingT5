@@ -42,7 +42,6 @@ int t=1;
 int cursor_x=11;
 int cursor_y=33;
 
-
 int main(void){
     int c;
     int result;
@@ -53,7 +52,7 @@ int main(void){
     noecho();
     curs_set(0);
     clear();
-   
+    
     /*
     Mission: AvoidX
     */
