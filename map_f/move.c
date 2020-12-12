@@ -33,25 +33,25 @@ int set_ticker(int n_msecs){
 	return setitimer(ITIMER_REAL, &new_timeset, NULL);
 }
 void viewB(int r, int c){
-	r = r-2;
-	c = c-2;
+	r = r-1;
+	c = c-1;
 	move(r,c);
-	for(int i =0; i<5;i++){
-		for(int j=0; j<5;j++){
+	for(int i =0; i<3;i++){
+		for(int j=0; j<3;j++){
 			mvaddch(r+i,c+j, BLANK);
 		}
 	}
 }
 
 void viewM(int r, int c){
-	r = r-2;
-	c = c-2;
+	r = r - 1;
+	c = c - 1;
 	border('*','*','*','*','*','*','*','*');
 	move(0,46);
 	vline('*',24);
 	move(r,c);
-	for(int i = 0; i<5;i++){
-		for(int j=0;j<5;j++){
+	for(int i = 0; i < 3;i++){
+		for(int j=0;j < 3;j++){
 			mvaddch(r+i,c+j, MAP[r+i][c+j]);
 		}
 	}
@@ -83,7 +83,6 @@ void move_msg(int signum){
 	addch(symbol);
 	refresh();
 }
-
 
 void setW(){
 	for(int i=0;i<25;i++){
@@ -131,7 +130,7 @@ int main(){
 	col = ball_start_col;
 	r_dir = 0;
 	c_dir = 0;
-	delay = 500;
+	delay = 1000;
 	
 	move(row,col);
 	addch(symbol);
@@ -146,6 +145,7 @@ int main(){
 		if(c == 's') {r_dir = 1; c_dir = 0;}
 		if(c == 'a') {c_dir = -1; r_dir = 0;}
 		if(c == 'd') {c_dir = 1; r_dir = 0;}
+		if(c == 'm') { /*start mission*/};
 		if(c == 'Q') break;
 	}
 	endwin();
