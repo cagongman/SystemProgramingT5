@@ -32,6 +32,7 @@ DATA own;
 // gameboard //
 /*----------------------*/
 int start = 0;
+int go = 0;
 char symbol;
 int ball_start_col = 0;
 int ball_start_row = 0;
@@ -130,7 +131,7 @@ void * gameBoard(void * arg){
 	col = ball_start_col;
 	r_dir = 0;
 	c_dir = 0;
-	delay = 1000;
+	delay = 300;
 	
 	for(int i=0;i<149;i++){
 		mvaddch(wall[i][0],wall[i][1],'*');
@@ -160,14 +161,17 @@ void * send_msg(void * arg)   // send thread main
 	int len;
 
 
-	data.who = P;
+	own.who = P;
+	row = ball_start_row;
+	col = ball_start_col;
 
 	while(1) 
 	{
-		data.p_col = col;
-		data.p_row = row;
-		write(sock, (void*)&data, sizeof(data));
-		// sleep(0.3);
+		own.p_col = col;
+		own.p_row = row;
+		write(sock, (void*)&own, sizeof(own));
+		sleep(0.3);
+		
 	}
 	return NULL;
 }
@@ -183,6 +187,8 @@ void * recv_msg(void * arg)   // read thread main
 	{
 		str_len = read(sock, (void*)&data, sizeof(data));
 		start = 1;
+		own.t_col = data.t_col;
+		own.t_row = data.t_row;
 
 		move(past_r, past_c);
 		addch(BLANK);
@@ -194,7 +200,7 @@ void * recv_msg(void * arg)   // read thread main
 		addch('$');
 		//sprintf(result, "t_row: %d, t_col: %d\np_row: %d, p_col: %d", data.t_row, data.t_col, data.p_row, data.p_col);
 		//fputs(result, stdout);
-		sleep(1);
+		// sleep(1);
 	}
 	return NULL;
 }
@@ -265,6 +271,7 @@ void move_msg(int signum){
 
 	row += r_dir;
 	col += c_dir;
+	// go = 1;
 
 	move(row,col);
 	//viewW(row,col);

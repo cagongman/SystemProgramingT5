@@ -22,6 +22,7 @@ typedef struct {
 }DATA;
 
 DATA admin;
+DATA data;
 
 void * handle_clnt(void * arg);
 void send_msg(DATA data, int len, int clnt_sock);
@@ -55,10 +56,10 @@ int main(int argc, char *argv[])
 	if(listen(serv_sock, 5)==-1)
 		error_handling("listen() error");
 
-	admin.p_col = 0;
-	admin.p_row = 0;
-	admin.t_col = 10;
-	admin.t_row = 0;
+	// admin.p_col = 0;
+	// admin.p_row = 0;
+	// admin.t_col = 10;
+	// admin.t_row = 0;
 	
 	while(1)
 	{
@@ -81,7 +82,7 @@ void * handle_clnt(void * arg)
 {
 	int clnt_sock=*((int*)arg);
 	int str_len=0, i;
-	DATA data;
+	DATA temp;
 	
 	while(1) {if(clnt_cnt == 2) break;}
 
@@ -107,6 +108,7 @@ void * handle_clnt(void * arg)
 	
 	pthread_mutex_unlock(&mutx);
 	close(clnt_sock);
+	
 	return NULL;
 }
 
@@ -115,23 +117,15 @@ void send_msg(DATA data, int len, int clnt_sock)   // send to all
 {
 	int i;
 	pthread_mutex_lock(&mutx);
-	// admin.who = ADMIN;
 	if(data.who == P){
 		admin.who = P;
-		admin.p_row = data.p_row;
 		admin.p_col = data.p_col;
-		// admin.t_col = data.t_col;
-		// admin.t_row = data.t_row;
-		//write(clnt_sock, (void*)&admin, sizeof(admin));
+		admin.p_row = data.p_row;
 	}else if(data.who == T){
 		admin.who = T;
-		// admin.p_row = data.p_row;
-		// admin.p_col = data.p_col;
 		admin.t_col = data.t_col;
 		admin.t_row = data.t_row;
-		//write(clnt_sock, (void*)&admin, sizeof(admin));
 	}
-	// for(i = 0; i<clnt_cnt; i++)
 	write(clnt_sock, (void*)&admin, sizeof(admin));
 	printf("t_row: %d, t_col: %d   p_row: %d, p_col: %d\n", admin.t_row, admin.t_col, admin.p_row, admin.p_col);
 		
