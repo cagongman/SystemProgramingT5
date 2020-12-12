@@ -8,39 +8,36 @@
 #include <signal.h>
 #include <time.h>
 
-#define  LINE "***********************************************************************"
+#define  LINE "***************************************************************"
 #define BLANK  ' '
-#define COLOR_BLACK 0
-#define COLOR_RED 1
 
-void basic(char *mission, int p);
+void basic(WINDOW *win,char *mission, int p);
 int set_ticker(int n_msecs);
-void win();
-void fail();
+void winner(WINDOW *win);
+void fail(WINDOW *win);
 
-void RockScissorPaper();
-void RockScissorPaper_keyboard();
-void draw_rcp();
-void change_colors(int cur, int option, int serv);
+void RockScissorPaper(WINDOW *win);
+void RockScissorPaper_keyboard(WINDOW *win);
+void draw_rcp(WINDOW *win);
+void change_colors(WINDOW *win,int cur, int option, int serv);
 int Does_theif_win(int thief, int serv);
 
-int FourOperation();
-void FourOperation_keyboard(int result);
+int FourOperation(WINDOW *win);
+void FourOperation_keyboard(WINDOW *win,int result);
 
-void AvoidX();
-void AvoidX_keyboard();
+void AvoidX(WINDOW *win);
+void AvoidX_keyboard(WINDOW *win);
 void move_x(int signum);
 int check_meet(int x, int y);
-void x_position(int row, int col, char x);
-void movingcursor(int x, int y, char c, int refresh);
+void x_position(WINDOW *win,int row, int col, char x);
+void movingcursor(WINDOW *win,int x, int y, char c, int refresh);
 
-int meet=0;
 int row=11;
 int col=45;
-int moving=1;
-int t=1; 
+
 int cursor_x=11;
 int cursor_y=33;
+WINDOW *win;
 
 int main(void){
     int c;
@@ -51,27 +48,23 @@ int main(void){
     crmode();
     noecho();
     curs_set(0);
+    start_color();
+    init_pair(1, COLOR_WHITE, COLOR_RED);
     clear();
+
+    win=subwin(stdscr,22,70,0,0);
+
+    AvoidX(win);
+    AvoidX_keyboard(win);
+
+    //RockScissorPaper(win);
+    //RockScissorPaper_keyboard(win);
+
+    //result=FourOperation(win);
+    //FourOperation_keyboard(win,result);
+
+    refresh();
     
-    /*
-    Mission: AvoidX
-    */
-    //AvoidX();
-    //AvoidX_keyboard();
-
-    /*
-    Mission: FourOperation
-    */
-    //RockScissorPaper();
-    //RockScissorPaper_keyboard();
-
-    /*
-    Mission: FourOperation +-
-    */
-    result=FourOperation();
-    FourOperation_keyboard(result);
-
-
     sleep(100);
     endwin();
     return 0;
@@ -79,34 +72,36 @@ int main(void){
 
 
 
-void AvoidX(){
+void AvoidX(WINDOW *win){
     int i;
-    basic("Avoid X", 3);
+    basic(win,"Avoid X", 3);
     for(i=4; i<20; i++)
-        movingcursor(i, 75, '#', 1);
-    move(6,77); addstr("F");
-    move(7,77); addstr("I");
-    move(8,77); addstr("N");
-    move(9,77); addstr("I");
-    move(10,77); addstr("S");
-    move(11,77); addstr("H");
-    move(13,77); addstr("L");
-    move(14,77); addstr("I");
-    move(15,77); addstr("N");
-    move(16,77); addstr("E");
-    refresh();
-    x_position(row, col, 'X');
-    movingcursor(cursor_x, cursor_y, 'O',1);
+        movingcursor(win,i, 68, '#', 1);
+    mvwaddch(win,6,69,'F');
+    mvwaddch(win,7,69,'I');
+    mvwaddch(win,8,69,'N');
+    mvwaddch(win,9,69,'I');
+    mvwaddch(win,10,69,'S');
+    mvwaddch(win,11,69,'H');
+    mvwaddch(win,13,69,'L');
+    mvwaddch(win,14,69,'I');
+    mvwaddch(win,15,69,'N');
+    mvwaddch(win,16,69,'E');
+    wrefresh(win);
+
+    x_position(win,row, col, 'X');
+    movingcursor(win,cursor_x, cursor_y, 'O',1);
     signal(SIGALRM, move_x);
     set_ticker(1500);
 }
 
-void AvoidX_keyboard(){
+void AvoidX_keyboard(WINDOW *win){
     char c;
+
     while(1){
-        c=getch();
+        c=wgetch(win);
         if(c=='w' || c=='d' || c=='a' || c=='s')
-            movingcursor(cursor_x, cursor_y, BLANK,1);
+            movingcursor(win,cursor_x, cursor_y, BLANK,1);
         switch (c)
         {
         case 'q':
@@ -116,11 +111,11 @@ void AvoidX_keyboard(){
                 cursor_x-=1;  
             break;
         case 'd':
-            if(cursor_y<79)
+            if(cursor_y<69)
                 cursor_y+=1;
-            if(cursor_y>75){
-                movingcursor(cursor_x, cursor_y, BLANK, 1);
-                win();
+            if(cursor_y>=69){
+                movingcursor(win,cursor_x, cursor_y, BLANK, 1);
+                winner(win);
                 signal(SIGALRM, SIG_IGN);
             }
             break;
@@ -136,99 +131,102 @@ void AvoidX_keyboard(){
             break;
         }
         if(c=='w' || c=='d' || c=='a' || c=='s')
-            movingcursor(cursor_x, cursor_y, 'O',1);
+            movingcursor(win,cursor_x, cursor_y, 'O',1);
       
     }
 }
 
-void x_position(int row, int col, char x){
-    int i;                                          
-    move(row, col);
-    addch(x);
+void x_position(WINDOW *win,int row, int col, char x){
+    int i;
+    static int meet=0;
+    mvwaddch(win, row, col, x);                                          
 
     for(i=1; i<15; i=i+2){
-        movingcursor(row-2, col+(2*i), x, 0);
-        if(check_meet(row-2, col+(2*i))){
+        movingcursor(win,row-2, col+(2*i)-6, x, 0);
+        if(check_meet(row-2, col+(2*i)-6)){
             meet=1;
             break;
         }
-        movingcursor(row+2, col+(2*i), x, 0);
-        if(check_meet(row+2, col+(2*i))){
+        movingcursor(win,row+2, col+(2*i)-6, x, 0);
+        if(check_meet(row+2, col+(2*i)-6)){
             meet=1;
             break;
         }
-        movingcursor(row-4, col+(2*(i+1)), x, 0);
-        if(check_meet(row-4, col+(2*(i+1)))){
+        movingcursor(win,row-4, col+(2*(i+1)-6), x, 0);
+        if(check_meet(row-4, col+(2*(i+1)-6))){
             meet=1;
             break;
         }
 
-        movingcursor(row, col+(2*(i+1)), x, 0);
-        if(check_meet(row, col+(2*(i+1)))){
+        movingcursor(win,row, col+(2*(i+1)-6), x, 0);
+        if(check_meet(row, col+(2*(i+1)-6))){
             meet=1;
             break;
         }
-        movingcursor(row+4, col+(2*(i+1)), x, 0);
-        if(check_meet(row+4, col+(2*(i+1)))){
+        movingcursor(win,row+4, col+(2*(i+1)-6), x, 0);
+        if(check_meet(row+4, col+(2*(i+1)-6))){
             meet=1;
             break;
         }
 
         if((i==5) || (i==9)){
-            movingcursor(row+6, col+(2*(i+1)), x, 0);
-            if(check_meet(row+6, col+(2*(i+1)))){
+            movingcursor(win,row+6, col+(2*(i+1)-6), x, 0);
+            if(check_meet(row+6, col+(2*(i+1)-6))){
                 meet=1;
                 break;
             }
-            movingcursor(row-6, col+(2*(i+1)), x, 0);
-            if(check_meet(row-6, col+(2*(i+1)))){
+            movingcursor(win,row-6, col+(2*(i+1)-6), x, 0);
+            if(check_meet(row-6, col+(2*(i+1)-6))){
                 meet=1;
                 break;
             }   
         }
 
         if(i==7){
-            movingcursor(row+7, col+(2*(i+1)), x, 0);
-            if(check_meet(row+7, col+(2*(i+1)))){
+            movingcursor(win,row+7, col+(2*(i+1)-6), x, 0);
+            if(check_meet(row+7, col+(2*(i+1)-6))){
                 meet=1;
                 break;
             }
-            movingcursor(row-7, col+(2*(i+1)), x, 0);
-            if(check_meet(row-7, col+(2*(i+1)))){
+            movingcursor(win,row-7, col+(2*(i+1)-6), x, 0);
+            if(check_meet(row-7, col+(2*(i+1)-6))){
                 meet=1;
                 break;
             }
         }
     }
     if(meet){
-        fail();
+        fail(win);
         signal(SIGALRM, SIG_IGN);
         //return;
     }
         
-    refresh();
+    wrefresh(win);
 }
 
+// add to main code
 void move_x(int signum){
     char x='X';
+    static int t=1;
     signal(SIGALRM, move_x);
-    x_position(row, col, BLANK);
+    x_position(win,row, col, BLANK);
     col-=1;
     if(t==1)
         row+=2;
     else
         row-=2;
     t*=-1;
-    x_position(row, col, x);
-    refresh();
+    x_position(win,row, col, x);
+    wrefresh(win);
 }
 
-void movingcursor(int x, int y, char c, int refresh){
-    move(x,y);
-    addch(c|A_BOLD);
+void movingcursor(WINDOW *win,int x, int y, char c, int refresh){
+    
+    mvwaddch(win, x,y, c|A_BOLD);
     if(refresh)
-        refresh();
+        wrefresh(win);
 }
+
 int check_meet(int x, int y){
     int res;
     res=(x==cursor_x && y==cursor_y);
@@ -237,20 +235,17 @@ int check_meet(int x, int y){
 
 /* Mission: FourOperation
 */
-int FourOperation(){
+int FourOperation(WINDOW *win){
     char c;
     char str[3];
     char buf[BUFSIZ];
     int num[3], result,i;
 
     echo();
-    basic("The Four Fundamental Operation",2);
-    move(16, 27);
-    addstr("*Enter to submit your answer");
-    move(18,27);
-    addstr("Answer :");
-    move(19,27);
-    addstr("--------------------------------");
+    basic(win,"The Four Fundamental Operation",2);
+    mvwaddstr(win, 16,27,"*Enter to submit your answer");
+    mvwaddstr(win, 18,27,"Answer :");
+    mvwaddstr(win, 19,27,"--------------------------------");
 
     srand(time(NULL));
     for(i=0; i<3; i++)
@@ -276,29 +271,30 @@ int FourOperation(){
                 break;
     }
     sprintf(buf, "%d %c %d %c %d", num[0], str[0], num[1], str[1], num[2]);
-    move(10, 35);
+    wmove(win, 10,35);
     start_color();
     init_pair(1, COLOR_BLACK, COLOR_YELLOW);
-    //printw("%s", buf, );
     for(i=0; i<strlen(buf); i++)
-        waddch(stdscr, buf[i] |COLOR_PAIR(1));
-    refresh();
+        waddch(win, buf[i] |COLOR_PAIR(1));
+    noecho();
+    wrefresh(win);
     return result;
 }
  
-void FourOperation_keyboard(int result){
+void FourOperation_keyboard(WINDOW *win, int result){
     int num;
     curs_set(1);
     echo();
-    move(18,36);
-    refresh();
-    scanw("%d", &num);
+    wmove(win,18,36);
+    wrefresh(win);
+
+    wscanw(win,"%d", &num);
     noecho();
     curs_set(0);
     if(num==result)
-        win();
+        winner(win);
     else
-        fail(); 
+        fail(win); 
 }
 
 /* 
@@ -306,60 +302,60 @@ default: SCISSOR
 press 'a'(to left) or 'd'(to right)
 press 'e' to submit
 */
-void RockScissorPaper(){
-    basic("ROCK SCISSOR PAPER !",1);
-    draw_rcp();
+void RockScissorPaper(WINDOW *win){
+    basic(win,"ROCK SCISSOR PAPER !",1);
+    draw_rcp(win);
 }
 
-void RockScissorPaper_keyboard(){
+void RockScissorPaper_keyboard(WINDOW *win){
     char c;
     int result, cur=1, win_result;
     srand(time(NULL));
     result=rand()%3; // 0:rock 1:scissor 2:paper
-    keypad(stdscr, 1);
+    
+    keypad(win, 1);
     start_color();
     init_pair(1, COLOR_WHITE, COLOR_RED);
     init_pair(2, COLOR_WHITE, COLOR_BLACK);
     init_pair(3, COLOR_WHITE, COLOR_YELLOW);
 
-    change_colors(cur,1,0);
+    change_colors(win,cur,1,0);
 
     while(1){
-        c=getch();
+        c=wgetch(win);
         if(c=='q')
             break;
         else if(c=='a'){
-            change_colors(cur,2,0);
+            change_colors(win, cur,2,0);
             cur=(cur-1)%3;
             if(cur<0)
                 cur=2;
-            change_colors(cur,1,0);
+            change_colors(win,cur,1,0);
         }
         else if(c=='d'){
-            change_colors(cur,2,0);
+            change_colors(win,cur,2,0);
             cur=(cur+1)%3;
-            change_colors(cur,1,0);
+            change_colors(win, cur,1,0);
         }
         else if(c=='e'){
-            change_colors(result, 3,1);
+            change_colors(win, result, 3,1);
             win_result=Does_theif_win(cur, result);  
             if(win_result==-1){
-                fail();
+                sleep(1);
+                fail(win);
                 break;
             }
             else if(win_result==1){
-                win();
+                sleep(1);
+                winner(win);
                 break;
             }
             else if(win_result==2){
-                move(10,32);
-                addstr("Same! Try Aagin!");
+                mvwaddstr(win,10,32,"Same! Try Aagin!");
                 result=rand()%3;
             }
         }
     }
-
-
 }
 
 int Does_theif_win(int thief, int serv){
@@ -389,13 +385,13 @@ int Does_theif_win(int thief, int serv){
             return 2;
     }
 }
-void change_colors(int cur, int option, int serv){
+void change_colors(WINDOW *win, int cur, int option, int serv){
+   
     int i, x,y;
     char *word;
 
     if(serv){
-        move(10,32);
-        addstr("            ");
+        mvwaddstr(win,10,32,"            ");
         x=10;
         y=35;
         switch(cur){
@@ -412,176 +408,148 @@ void change_colors(int cur, int option, int serv){
         case 2: word="PAPER"; y=48; break;
         }
     }
-    
-    for(i=0; i<strlen(word); i++){
-        move(x, y+i);
-        waddch(stdscr, word[i] |COLOR_PAIR(option));
-    }
-    refresh();
+    for(i=0; i<strlen(word); i++)
+        mvwaddch(win, x,y+i, word[i] |COLOR_PAIR(option));
+    wrefresh(win);
 }
 
-void draw_rcp(){
+void draw_rcp(WINDOW*win){
     
-    move(8, 30);
-    addstr("The server shows ...");
-    move(11, 30);
-    addstr("=====================");
-    move(14, 23);
-    addstr("*Use 'a', 'd' to select your r.c.p");
-    move(15,23);
-    addstr("*Press 'e' to submit your r.c.p");
+    mvwaddstr(win, 8,30,"The server shows ...");
+    mvwaddstr(win,11,30,"=====================");
+    mvwaddstr(win, 14,23,"*Use 'a', 'd' to select your r.c.p");
+    mvwaddstr(win, 15,23,"*Press 'e' to submit your r.c.p");
+
     //ROCK
-    move(17, 23);
-    addstr("********");
-    move(18,23);
-    addstr("*");
-    move(18,25);
-    addstr("ROCK");
-    move(18, 30);
-    addstr("*");
-    move(19, 23);
-    addstr("********");
+    mvwaddstr(win,17,23,"********");
+    mvwaddstr(win,18,23,"*");
+    mvwaddstr(win,18,25,"ROCK");
+    mvwaddstr(win,18,30,"*");
+    mvwaddstr(win,19,23,"********");
 
     //SCISSOR
-    move(17, 33);
-    addstr("***********");
-    move(18,33);
-    addstr("*");
-    move(18,35);
-    addstr("SCISSOR");
-    move(18, 43);
-    addstr("*");
-    move(19, 33);
-    addstr("***********");
-
+    mvwaddstr(win,17,33,"***********");
+    mvwaddstr(win,18,33,"*");
+    mvwaddstr(win,18,35,"SCISSOR");
+    mvwaddstr(win,18,43,"*");
+    mvwaddstr(win,19,33,"***********");
+   
     //PAPER
-    move(17, 46);
-    addstr("*********");
-    move(18,46);
-    addstr("*");
-    move(18,48);
-    addstr("PAPER");
-    move(18, 54);
-    addstr("*");
-    move(19, 46);
-    addstr("*********");
+    mvwaddstr(win,17,46,"*********");
+    mvwaddstr(win,18,46,"*");
+    mvwaddstr(win,18,48,"PAPER");
+    mvwaddstr(win,18,54,"*");
+    mvwaddstr(win,19,46,"*********");
 
-    refresh();
+    wrefresh(win);
 }
 
-void basic(char *mission, int p){
+void basic(WINDOW *win,char *mission, int p){
     char title[]="MISSION";
 
-    move(1, 35);
-    addstr(title);
-    move(3, 5);
-    addstr(LINE);
-    move(21, 5);
-    addstr(LINE);
+    mvwaddstr(win, 1,35, title);
+    mvwaddstr(win, 3,5, LINE);
+    mvwaddstr(win, 21,5,LINE);
 
     switch (p)
     {
-    case 1: 
-        move(2, 30);
-        addstr(mission);
-        break;
-    case 2:
-        move(2, 24);
-        addstr(mission);
-        break;
-    case 3:
-        move(2, 35);
-        addstr(mission);
-    default:
-        break;
+        case 1: 
+            mvwaddstr(win,2,30,mission);
+            break;
+        case 2:
+            mvwaddstr(win,2,24,mission);
+            break;
+        case 3:
+            mvwaddstr(win,2,35, mission);
+        default:
+            break;
     }
 
-    refresh();
+    wrefresh(win);
 }
 
-void fail(){
+void fail(WINDOW *win){
     int i,j;
- 
     clear();
     //L
     for(i=8; i<=17; i++)
-        movingcursor(i,25,'*', 0);
+        movingcursor( win,i,25,'*', 0);
     for(j=25; j<=31; j++)
-        movingcursor(17,j,'*', 0);
+        movingcursor(win,17,j,'*', 0);
     //O
     for(i=10; i<=15; i++)
-        movingcursor(i, 32,'*',0);
-    movingcursor(9,33,'*',0);
-    movingcursor(16,33,'*',0);
+        movingcursor(win,i, 32,'*',0);
+    movingcursor(win,9,33,'*',0);
+    movingcursor(win,16,33,'*',0);
     for(j=34; j<=36; j++){
-        movingcursor(8,j,'*', 0);
-        movingcursor(17,j,'*',0);
+        movingcursor(win,8,j,'*', 0);
+        movingcursor(win,17,j,'*',0);
     }
-    movingcursor(9,37,'*',0);
-    movingcursor(16,37,'*',0);
+    movingcursor(win,9,37,'*',0);
+    movingcursor(win,16,37,'*',0);
     for(i=10; i<=15; i++)
-        movingcursor(i, 38,'*',0);
+        movingcursor(win,i, 38,'*',0);
     //S
-    movingcursor(10, 39,'*',0);
-    movingcursor(11, 39,'*',0);
-    movingcursor(9,40,'*',0);
+    movingcursor(win,10, 39,'*',0);
+    movingcursor(win,11, 39,'*',0);
+    movingcursor(win,9,40,'*',0);
     for(j=41;j<=45; j++)
-        movingcursor(8,j,'*',0);
+        movingcursor(win,8,j,'*',0);
     for(j=40; j<=43; j++)
-        movingcursor(12,j,'*',0);
+        movingcursor(win,12,j,'*',0);
     for(j=39; j<=43; j++)
-        movingcursor(17,j,'*',0);
-    movingcursor(13,44, '*',0);
-    movingcursor(16,44,'*',0);
+        movingcursor(win,17,j,'*',0);
+    movingcursor(win,13,44, '*',0);
+    movingcursor(win,16,44,'*',0);
     for(i=14; i<=15; i++)
-        movingcursor(i,45,'*',0);
+        movingcursor(win,i,45,'*',0);
     //E
     for(j=47; j<=53; j++)
-        movingcursor(8,j,'*',0);
+        movingcursor(win,8,j,'*',0);
     for(i=9; i<=17; i++)
-        movingcursor(i,47,'*',0);
+        movingcursor(win,i,47,'*',0);
     for(j=48; j<=52; j++)
-        movingcursor(12,j,'*',0);
+        movingcursor(win,12,j,'*',0);
     for(j=48; j<=53; j++)
-        movingcursor(17,j,'*',0);
-    refresh();
+        movingcursor(win,17,j,'*',0);
+    wrefresh(win);
 }
 
-void win(){
+void winner(WINDOW *win){
     int i,j;
     clear();
     //W
     for(i=8; i<=13; i++){
-        movingcursor(i,25,'*',0);
-        movingcursor(i,29,'*',0);
-        movingcursor(i,30,'*',0);
-        movingcursor(i,34,'*',0);
+        movingcursor(win,i,25,'*',0);
+        movingcursor(win,i,29,'*',0);
+        movingcursor(win,i,30,'*',0);
+        movingcursor(win,i,34,'*',0);
     }
         
     for(i=14; i<=16; i++){
-        movingcursor(i, 26, '*',0);
-        movingcursor(i, 28, '*',0);
-        movingcursor(i, 31, '*',0);
-        movingcursor(i, 33, '*',0);
+        movingcursor(win,i, 26, '*',0);
+        movingcursor(win,i, 28, '*',0);
+        movingcursor(win,i, 31, '*',0);
+        movingcursor(win,i, 33, '*',0);
     }
-    movingcursor(17,27,'*',0);
-    movingcursor(17,32,'*',0);
+    movingcursor(win,17,27,'*',0);
+    movingcursor(win,17,32,'*',0);
 
     //I
     for(j=35; j<=41; j++){
-        movingcursor(8,j,'*',0);
-        movingcursor(17,j,'*',0);
+        movingcursor(win,8,j,'*',0);
+        movingcursor(win,17,j,'*',0);
     }
     for(i=8;i<=17;i++){
-        movingcursor(i,38,'*',0);
-        movingcursor(i,43,'*',0);
-        movingcursor(i,52,'*',0);
+        movingcursor(win,i,38,'*',0);
+        movingcursor(win,i,43,'*',0);
+        movingcursor(win,i,52,'*',0);
     }
     //N
-    movingcursor(9,44,'*',0);
+    movingcursor(win,9,44,'*',0);
     for(i=10; i<=17; i++)
-        movingcursor(i, i+34, '*',0);
-    refresh();
+        movingcursor(win,i, i+34, '*',0);
+    wrefresh(win);
 }
 
 
