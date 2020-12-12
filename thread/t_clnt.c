@@ -10,7 +10,7 @@
 #include <sys/wait.h>
 #include <curses.h>
 
-#include "map.h"
+#include "newmap.h"
 	
 #define BLANK ' '
 #define T 0
@@ -32,10 +32,11 @@ DATA own;
 // gameboard //
 /*----------------------*/
 int start = 0;
-int go = 0;
+
 char symbol;
-int ball_start_col = 10;
-int ball_start_row = 0;
+int ball_start_col = 20;
+int ball_start_row = 2;
+
 int row;
 int col;
 int r_dir;
@@ -43,9 +44,11 @@ int c_dir;
 
 int set_ticker(int);
 void viewB(int, int);
-void viewW(int, int);
+void viewM(int, int);
 void move_msg(int);
 void setW();
+void setM();
+
 /*----------------------*/
 
 
@@ -59,10 +62,6 @@ void error_handling(char * msg);
 int main(int argc, char *argv[])
 {
 	int sock;
-	/*sigset_t newmask;
-	sigemptyset(&newmask);
-	sigaddset(&newmask, SIGALRM);
-	pthread_sigmask(SIG_BLOCK,&newmask, NULL);*/
 	struct sockaddr_in serv_addr;
 	pthread_t snd_thread, rcv_thread, gb_thread, signal_thread;
 	void * thread_return;
@@ -82,7 +81,6 @@ int main(int argc, char *argv[])
 	if(connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))==-1)
 		error_handling("connect() error");
 	
-	//pthread_create(&signal_thread, NULL, signal_msg, NULL);
 	pthread_create(&snd_thread, NULL, send_msg, (void*)&sock);
 	pthread_create(&rcv_thread, NULL, recv_msg, (void*)&sock);
 	pthread_create(&gb_thread, NULL, gameBoard, (void*)&sock);
@@ -109,7 +107,7 @@ void * gameBoard(void * arg){
 	int ndelay;
 	int c;
 	void move_msg(int);
-	
+
 	while(1){ 
 		if(start){
 			printf("start!\n");
@@ -117,11 +115,13 @@ void * gameBoard(void * arg){
 			break;
 		}
 	}
-
-	symbol = '$';
-	ball_start_col = data.t_col;
-	ball_start_row = data.t_row;
+	
+	symbol = 'T';
+	ball_start_col = data.p_col;
+	ball_start_row = data.p_row;
 	setW();
+	setM();
+
 	initscr();
 	crmode();
 	noecho();
@@ -131,11 +131,8 @@ void * gameBoard(void * arg){
 	col = ball_start_col;
 	r_dir = 0;
 	c_dir = 0;
-	delay = 500;
+	delay = 300;
 	
-	for(int i=0;i<149;i++){
-		mvaddch(wall[i][0],wall[i][1],'*');
-	}
 	move(row,col);
 	addch(symbol);
 	signal(SIGALRM, move_msg);
@@ -197,10 +194,7 @@ void * recv_msg(void * arg)   // read thread main
 		past_c = data.p_col;
 
 		move(data.p_row, data.p_col);
-		addch('#');
-		//sprintf(result, "t_row: %d, t_col: %d\np_row: %d, p_col: %d", data.t_row, data.t_col, data.p_row, data.p_col);
-		//fputs(result, stdout);
-		// sleep(1);
+		addch('P');
 	}
 	return NULL;
 }
@@ -231,23 +225,23 @@ int set_ticker(int n_msecs){
 	return setitimer(ITIMER_REAL, &new_timeset, NULL);
 }
 void viewB(int r, int c){
-	r = r-1;
-	c = c-1;
+	r = r-2;
+	c = c-2;
 	move(r,c);
-	for(int i =0; i<3;i++){
-		for(int j=0; j<3;j++){
-			mvaddch(r+i,c+i, BLANK);
+	for(int i =0; i<5;i++){
+		for(int j=0; j<5;j++){
+			mvaddch(r+i,c+j, BLANK);
 		}
 	}
 }
 
-void viewW(int r, int c){
-	r = r-1;
-	c = c-1;
+void viewM(int r, int c){
+	r = r-2;
+	c = c-2;
 	move(r,c);
-	for(int i = 0; i<3;i++){
-		for(int j=0;j<3;j++){
-			mvaddch(r+i,c+i, WALL[r+i][c+i]);
+	for(int i = 0; i<5;i++){
+		for(int j=0;j<5;j++){
+			mvaddch(r+i,c+j, MAP[r+i][c+j]);
 		}
 	}
 }
@@ -255,40 +249,51 @@ void viewW(int r, int c){
 void move_msg(int signum){
 	signal(SIGALRM, move_msg);
 	
-	if (c_dir == -1 && WALL[row][col - 1] != ' ')
+	if (c_dir == -1 && MAP[row][col - 1] == '*')
 		c_dir = 0;
-	if(c_dir == 1 && WALL[row][col + 1] != ' ')
+	if(c_dir == 1 && MAP[row][col + 1] == '*')
 		c_dir = 0;
-	if(r_dir == -1 && WALL[row - 1][col] != ' ')
+	if(r_dir == -1 && MAP[row - 1][col] == '*')
 		r_dir = 0;
-	if(r_dir == 1 && WALL[row + 1][col] != ' ')
+	if(r_dir == 1 && MAP[row + 1][col] == '*')
 		r_dir = 0;
 	
 	move(row, col);
-	//viewB(row,col);
-	//move(row,col);
+	viewB(row,col);
+	move(row,col);
 	addch(BLANK);
 
 	row += r_dir;
 	col += c_dir;
-	// go = 1;
 
 	move(row,col);
-	//viewW(row,col);
-	//move(row,col);
+	viewM(row,col);
+	move(row,col);
 	addch(symbol);
 	refresh();
 }
 
 void setW(){
 	for(int i=0;i<25;i++){
-		for(int j=0;j<80;j++){
-			WALL[i][j] = ' ';
+		for(int j=0;j<47;j++){
+			MAP[i][j] = ' ';
 		}
+		MAP[i][0] = '*';
+		MAP[i][46] = '*';
 	}
-	for(int i=0;i<149;i++){
+	for(int i=0;i<47;i++){
+		MAP[0][i] = '*';
+		MAP[24][i] = '*';
+	}
+	for(int i=0;i<260;i++){
 		int r = wall[i][0];
 		int c = wall[i][1];
-		WALL[r][c] = '*';
+		MAP[r][c] = '*';
+	}
+}
+
+void setM(){
+	for(int i=0;i<6;i++){
+		MAP[mission[i][0]][mission[i][1]] = 'M';
 	}
 }
