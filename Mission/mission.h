@@ -9,7 +9,6 @@
 #include <time.h>
 
 void basic(WINDOW *win,char *mission, int p);
-int set_ticker(int n_msecs);
 void winner(WINDOW *win);
 void fail(WINDOW *win);
 

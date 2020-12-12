@@ -4,7 +4,7 @@
 #define  LINE "***************************************************************"
 #define BLANK  ' '
 
-int row, col;
+int mission_row, mission_col;
 int cursor_x, cursor_y;
 
 void AvoidX(WINDOW *win){
@@ -24,7 +24,7 @@ void AvoidX(WINDOW *win){
     mvwaddch(win,16,69,'E');
     wrefresh(win);
 
-    x_position(win,row, col, 'X');
+    x_position(win,mission_row, mission_col, 'X');
     movingcursor(win,cursor_x, cursor_y, 'O',1);
     signal(SIGALRM, move_x);
     set_ticker(1500);
@@ -71,60 +71,60 @@ void AvoidX_keyboard(WINDOW *win){
     }
 }
 
-void x_position(WINDOW *win,int row, int col, char x){
+void x_position(WINDOW *win,int mission_row, int mission_col, char x){
     int i;
     static int meet=0;
-    mvwaddch(win, row, col, x);                                          
+    mvwaddch(win, mission_row, mission_col, x);                                          
 
     for(i=1; i<15; i=i+2){
-        movingcursor(win,row-2, col+(2*i)-6, x, 0);
-        if(check_meet(row-2, col+(2*i)-6)){
+        movingcursor(win,mission_row-2, mission_col+(2*i)-6, x, 0);
+        if(check_meet(mission_row-2, mission_col+(2*i)-6)){
             meet=1;
             break;
         }
-        movingcursor(win,row+2, col+(2*i)-6, x, 0);
-        if(check_meet(row+2, col+(2*i)-6)){
+        movingcursor(win,mission_row+2, mission_col+(2*i)-6, x, 0);
+        if(check_meet(mission_row+2, mission_col+(2*i)-6)){
             meet=1;
             break;
         }
-        movingcursor(win,row-4, col+(2*(i+1)-6), x, 0);
-        if(check_meet(row-4, col+(2*(i+1)-6))){
+        movingcursor(win,mission_row-4, mission_col+(2*(i+1)-6), x, 0);
+        if(check_meet(mission_row-4, mission_col+(2*(i+1)-6))){
             meet=1;
             break;
         }
 
-        movingcursor(win,row, col+(2*(i+1)-6), x, 0);
-        if(check_meet(row, col+(2*(i+1)-6))){
+        movingcursor(win,mission_row, mission_col+(2*(i+1)-6), x, 0);
+        if(check_meet(mission_row, mission_col+(2*(i+1)-6))){
             meet=1;
             break;
         }
-        movingcursor(win,row+4, col+(2*(i+1)-6), x, 0);
-        if(check_meet(row+4, col+(2*(i+1)-6))){
+        movingcursor(win,mission_row+4, mission_col+(2*(i+1)-6), x, 0);
+        if(check_meet(mission_row+4, mission_col+(2*(i+1)-6))){
             meet=1;
             break;
         }
 
         if((i==5) || (i==9)){
-            movingcursor(win,row+6, col+(2*(i+1)-6), x, 0);
-            if(check_meet(row+6, col+(2*(i+1)-6))){
+            movingcursor(win,mission_row+6, mission_col+(2*(i+1)-6), x, 0);
+            if(check_meet(mission_row+6, mission_col+(2*(i+1)-6))){
                 meet=1;
                 break;
             }
-            movingcursor(win,row-6, col+(2*(i+1)-6), x, 0);
-            if(check_meet(row-6, col+(2*(i+1)-6))){
+            movingcursor(win,mission_row-6, mission_col+(2*(i+1)-6), x, 0);
+            if(check_meet(mission_row-6, mission_col+(2*(i+1)-6))){
                 meet=1;
                 break;
             }   
         }
 
         if(i==7){
-            movingcursor(win,row+7, col+(2*(i+1)-6), x, 0);
-            if(check_meet(row+7, col+(2*(i+1)-6))){
+            movingcursor(win,mission_row+7, mission_col+(2*(i+1)-6), x, 0);
+            if(check_meet(mission_row+7, mission_col+(2*(i+1)-6))){
                 meet=1;
                 break;
             }
-            movingcursor(win,row-7, col+(2*(i+1)-6), x, 0);
-            if(check_meet(row-7, col+(2*(i+1)-6))){
+            movingcursor(win,mission_row-7, mission_col+(2*(i+1)-6), x, 0);
+            if(check_meet(mission_row-7, mission_col+(2*(i+1)-6))){
                 meet=1;
                 break;
             }
@@ -144,14 +144,14 @@ void move_x(int signum){
     char x='X';
     static int t=1;
     signal(SIGALRM, move_x);
-    x_position(win,row, col, BLANK);
-    col-=1;
+    x_position(win,mission_row, mission_col, BLANK);
+    mission_col-=1;
     if(t==1)
-        row+=2;
+        mission_row+=2;
     else
-        row-=2;
+        mission_row-=2;
     t*=-1;
-    x_position(win,row, col, x);
+    x_position(win,mission_row, mission_col, x);
     wrefresh(win);
 }
 
@@ -487,16 +487,3 @@ void winner(WINDOW *win){
     wrefresh(win);
 }
 
-
-int set_ticker(int n_msecs){
-    struct itimerval timer;
-    long n_sec, n_usec;
-    
-    n_sec=n_msecs/1000;
-    n_usec=(n_msecs%1000)*1000L;
-    timer.it_value.tv_sec=n_sec;
-    timer.it_value.tv_usec=n_usec;
-    timer.it_interval.tv_sec=n_sec;
-    timer.it_interval.tv_usec=n_usec;
-
-    return setitimer(ITIMER_
