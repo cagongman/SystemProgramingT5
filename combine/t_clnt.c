@@ -186,8 +186,9 @@ void gameBoard(){
 				mission_num = 0;
 				switch(mission_num){
 					case 0:
-						/*mission_row=11; mission_col=45;
-						cursor_x=11; cursor_y=33;*/
+						mission_row=11; mission_col=45;
+						cursor_x=11; cursor_y=33;
+						meet=0;
 						AvoidX(window);
     					mis+=AvoidX_keyboard(window);
 						break;
@@ -434,13 +435,22 @@ void AvoidX(WINDOW *window){
 int AvoidX_keyboard(WINDOW *window){
     char c;
     while(1){
-        c=wgetch(window);
 		if(meet==1){
+			signal(SIGALRM, SIG_IGN);
 			fail(window);
+			wrefresh(window);
 			sleep(1);
 			return 0;
 		}
-        if(c=='w' || c=='d' || c=='a' || c=='s')
+        c=wgetch(window);
+		if(meet==1){
+			signal(SIGALRM, SIG_IGN);
+			fail(window);
+			wrefresh(window);
+			sleep(1);
+			return 0;
+		}
+		if(c=='w' || c=='d' || c=='a' || c=='s')
             movingcursor(window,cursor_x, cursor_y, BLANK,1);
 		if(c=='q')
 			break;
@@ -455,9 +465,9 @@ int AvoidX_keyboard(WINDOW *window){
 			else if(cursor_y>=69){
 				movingcursor(window,cursor_x, cursor_y, BLANK, 1);
                 winner(window);
+				wrefresh(window);
                 sleep(1);
 				return 5;
-                break;
 			}
 		}
 		else if(c=='a'){
@@ -466,8 +476,15 @@ int AvoidX_keyboard(WINDOW *window){
 			}
 		}
 		else if(c=='s'){
-			if(cursor_x<22)
+			if(cursor_x<21)
 				cursor_x+=1;
+		}
+		if(meet==1){
+			//signal(SIGALRM, SIG_IGN);
+			fail(window);
+			wrefresh(window);
+			sleep(1);
+			return 0;
 		}
 		if(c=='w' || c=='d' || c=='a' || c=='s')
             movingcursor(window,cursor_x, cursor_y, 'O',1);
