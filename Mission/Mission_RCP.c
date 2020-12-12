@@ -56,8 +56,8 @@ int main(void){
     /*
     Mission: AvoidX
     */
-    AvoidX();
-    AvoidX_keyboard();
+    //AvoidX();
+    //AvoidX_keyboard();
 
     /*
     Mission: FourOperation
@@ -68,8 +68,8 @@ int main(void){
     /*
     Mission: FourOperation +-
     */
-    //result=FourOperation();
-    //FourOperation_keyboard(result);
+    result=FourOperation();
+    FourOperation_keyboard(result);
 
 
     sleep(100);
@@ -277,7 +277,11 @@ int FourOperation(){
     }
     sprintf(buf, "%d %c %d %c %d", num[0], str[0], num[1], str[1], num[2]);
     move(10, 35);
-    printw("%s", buf);
+    start_color();
+    init_pair(1, COLOR_BLACK, COLOR_YELLOW);
+    //printw("%s", buf, );
+    for(i=0; i<strlen(buf); i++)
+        waddch(stdscr, buf[i] |COLOR_PAIR(1));
     refresh();
     return result;
 }
@@ -338,20 +342,18 @@ void RockScissorPaper_keyboard(){
         }
         else if(c=='e'){
             change_colors(result, 3,1);
-            win_result=Does_theif_win(cur, result);
+            win_result=Does_theif_win(cur, result);  
             if(win_result==-1){
-                sleep(1);
                 fail();
                 break;
             }
             else if(win_result==1){
-                sleep(1);
                 win();
                 break;
             }
             else if(win_result==2){
                 move(10,32);
-                addstr("   Same! Try Aagin!    ");
+                addstr("Same! Try Aagin!");
                 result=rand()%3;
             }
         }
