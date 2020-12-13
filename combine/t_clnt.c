@@ -63,7 +63,7 @@ void setM();
 void gauge(int);
 void minimap();
 void AvoidX(WINDOW *win);
-int AvoidX_keyboard(WINDOW *win);
+void AvoidX_keyboard(WINDOW *win);
 void move_x(int signum);
 void x_position(WINDOW *win,int row, int col, char x);
 int check_meet(int x, int y);
@@ -74,7 +74,6 @@ void start_point();
 
 void * send_msg(void * arg);
 void * recv_msg(void * arg);
-//void * gameBoard(void * arg);
 void gameBoard();
 void * signal_msg(void *arg);
 void error_handling(char * msg);
@@ -91,7 +90,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	 }
 
-	own.win=-1;
+	//own.win=-1;
 	own.mis_gauge=0;
 	start_point();
 
@@ -168,7 +167,7 @@ void gameBoard(){
 	signal(SIGQUIT, SIG_IGN);
 	set_ticker( delay );
 	
-	window=subwin(stdscr,23,80,0,0);
+	window=subwin(stdscr,22,73,0,0);
 	
 	while(true){
 		c = getch();
@@ -182,23 +181,22 @@ void gameBoard(){
 				clear();
 				signal(SIGALRM, SIG_IGN);
 				touchwin(window);
-				//mission_num=rand()%3;
-				mission_num = 0;
+				mission_num = rand()%3;
 				switch(mission_num){
 					case 0:
 						mission_row=11; mission_col=45;
 						cursor_x=11; cursor_y=33;
 						meet=0;
 						AvoidX(window);
-    					mis+=AvoidX_keyboard(window);
+    					AvoidX_keyboard(window);
 						break;
 					case 1:
 						result=FourOperation(window);
-    					mis+=FourOperation_keyboard(window,result);
+    					own.mis_gauge+=FourOperation_keyboard(window,result);
 						break;
 					case 2:
 						RockScissorPaper(window);
-						mis+=RockScissorPaper_keyboard(window);
+						own.mis_gauge+=RockScissorPaper_keyboard(window);
 						break;
 				}
 
@@ -206,7 +204,7 @@ void gameBoard(){
 				wclear(window);
 				wrefresh(window);
 				delwin(window);
-				window=subwin(stdscr,23,80,0,0);
+				window=subwin(stdscr,22,73,0,0);
 				touchwin(stdscr);
 				clear();
 
@@ -227,14 +225,11 @@ void * send_msg(void * arg)   // send thread main
 	int sock=*((int*)arg);
 	int len;
 	own.who = T;
-    col = ball_start_col;
-    row = ball_start_row;
-
 	while(1) 
 	{
 		own.t_col = col;
 		own.t_row = row;
-		own.mis_gauge=mis;
+		//own.mis_gauge=mis;
 		write(sock, (void*)&own, sizeof(own));
 		sleep(0.5);	
 	}
@@ -277,6 +272,14 @@ void * recv_msg(void * arg)   // read thread main
 	}
 	return NULL;
 }
+
+void start_point(){
+	int n;
+	srand(time(NULL));
+	n=(rand()%23)+1;
+	ball_start_row=n;
+	ball_start_col=1;
+}
 	
 void error_handling(char *msg)
 {
@@ -302,7 +305,7 @@ void viewM(int r, int c){
 	border('*','*','*','*','*','*','*','*');
 	move(0,46);
 	vline('*',24);
-	gauge(mis);
+	gauge(own.mis_gauge);
 	minimap();
 	move(r,c);
 	for(int i = 0; i < 3;i++){
@@ -368,14 +371,6 @@ void setM(){
 	}
 }
 
-void start_point(){
-	int n;
-	srand(time(NULL));
-	n=(rand()%23)+1;
-	ball_start_row=20;
-	ball_start_col=2;
-}
-
 void gauge(int mis){
 	move(1,56);
 	addstr("!Mission Gauge!");
@@ -427,64 +422,47 @@ void AvoidX(WINDOW *window){
     signal(SIGALRM, move_x);
 }
 
-int AvoidX_keyboard(WINDOW *window){
+ void AvoidX_keyboard(WINDOW *window){
     char c;
-    while(1){
-		if(meet==1){
-			signal(SIGALRM, SIG_IGN);
-			fail(window);
-			wrefresh(window);
-			sleep(1);
-			return 0;
-		}
+    while(meet==0){
         c=wgetch(window);
-		if(meet==1){
-			signal(SIGALRM, SIG_IGN);
-			fail(window);
-			wrefresh(window);
-			sleep(1);
-			return 0;
-		}
+
 		if(c=='w' || c=='d' || c=='a' || c=='s')
             movingcursor(window,cursor_x, cursor_y, BLANK,1);
-		if(c=='q')
-			break;
-		else if(c=='w'){
-			if(cursor_x>4)
-				cursor_x-=1;
-		}
-		else if(c=='d'){
-			if(cursor_y<69){
-				cursor_y+=1;
-			}
-			else if(cursor_y>=69){
-				movingcursor(window,cursor_x, cursor_y, BLANK, 1);
-                winner(window);
-				wrefresh(window);
-                sleep(1);
-				return 5;
-			}
-		}
-		else if(c=='a'){
-			if(cursor_y>5){
-				cursor_y-=1;
-			}
-		}
-		else if(c=='s'){
-			if(cursor_x<21)
-				cursor_x+=1;
-		}
-		if(meet==1){
-			//signal(SIGALRM, SIG_IGN);
-			fail(window);
-			wrefresh(window);
-			sleep(1);
-			return 0;
-		}
-		if(c=='w' || c=='d' || c=='a' || c=='s')
+		switch (c)
+        {
+			case 'q':
+				break;
+			case 'w':
+				if(cursor_x>4)
+					cursor_x-=1;  
+				break;
+			case 'd':
+				if(cursor_y<69)
+					cursor_y+=1;
+				if(cursor_y>=69){
+					movingcursor(window,cursor_x, cursor_y, BLANK, 1);
+					winner(window);
+					own.mis_gauge+=5; 
+					sleep(1);
+					return;
+				}
+				break;
+			case 'a':
+				if(cursor_y>5)
+					cursor_y-=1;     
+				break;
+			case 's':
+				if(cursor_x<20)
+					cursor_x+=1;
+				break; 
+			default:
+				break;
+        }
+        if(c=='w' || c=='d' || c=='a' || c=='s')
             movingcursor(window,cursor_x, cursor_y, 'O',1);
-
-	}
+    }
+	return;
 }
 
 void x_position(WINDOW *window,int mission_row, int mission_col, char x){
@@ -546,7 +524,12 @@ void x_position(WINDOW *window,int mission_row, int mission_col, char x){
         }
 		
     }
-	return;
+	if(meet){
+		signal(SIGALRM, SIG_IGN);
+        fail(window); //return;
+		mvwaddstr(window, 19, 21, "You lose! Enter any key to go back");
+		wrefresh(window);
+    }
 }
 
 // add to main code
