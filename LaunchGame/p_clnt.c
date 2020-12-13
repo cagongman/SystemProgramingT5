@@ -34,7 +34,7 @@ typedef struct{
 DATA data;
 DATA own;
 
-sint start = 0;
+int start = 0;
 
 char symbol;
 int ball_start_col;
