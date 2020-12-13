@@ -77,11 +77,11 @@ int main(int argc, char *argv[])
 		exit(1);
 	 }
 
-	//own.win=-1;
+	own.win=-1;
 	own.mis_gauge=0;
 	start_point();
 	sock=socket(PF_INET, SOCK_STREAM, 0);
-	own.win = -1;
+	
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family=AF_INET;
 	serv_addr.sin_addr.s_addr=inet_addr(argv[1]);
@@ -168,14 +168,18 @@ void * send_msg(void * arg)   // send thread main
 	int sock=*((int*)arg);
 	int len;
 
+
 	own.who = P;
+	row = ball_start_row;
+	col = ball_start_col;
 
 	while(1) 
 	{
 		own.p_col = col;
 		own.p_row = row;
 		write(sock, (void*)&own, sizeof(own));
-		sleep(0.3);	
+		sleep(0.3);
+		
 	}
 	return NULL;
 }

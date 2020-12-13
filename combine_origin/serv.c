@@ -18,7 +18,6 @@ typedef struct {
 	int p_col;
 	int t_row;
 	int t_col;
-	int win;
 	int who;
 	int win;
 	int mis_gauge;
@@ -46,13 +45,10 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
   
-	//admin.win=-1;
 	pthread_mutex_init(&mutx, NULL);
 	serv_sock=socket(PF_INET, SOCK_STREAM, 0);
 
 	memset(&serv_adr, 0, sizeof(serv_adr));
-	//memset(&admin, 0, sizeof(admin));
-
 	serv_adr.sin_family=AF_INET; 
 	serv_adr.sin_addr.s_addr=htonl(INADDR_ANY);
 	serv_adr.sin_port=htons(atoi(argv[1]));
@@ -136,7 +132,7 @@ void send_msg(DATA data, int len, int clnt_sock)   // send to all
 		admin.win=data.win;
 	}
 	write(clnt_sock, (void*)&admin, sizeof(admin));	
-	printf("t_row: %d t_col: %d, p_row: %d p_col: %d\n", admin.t_row, admin.t_col, admin.p_row, admin.p_col);
+		
 	pthread_mutex_unlock(&mutx);
 }
 
