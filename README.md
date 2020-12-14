@@ -2,8 +2,8 @@
 #### 팀원: 이기섭, 조윤하, 권도윤
 #### 주제: 경찰과 도둑 추격 게임
 
-
-## 게임 실행법
+<br>
+# 게임 실행법
 1. LaunchGame폴더로 이동한다.
 2. make -f makeserver.mk<br>make -f makepolice.mk<br>makethief.mk 를 입력하여 서버와 경찰과 도둑 클라이언트를 생성한다.
 
