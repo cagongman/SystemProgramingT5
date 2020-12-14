@@ -22,6 +22,7 @@ int FourOperation(WINDOW *win){
     mvwaddstr(win, 18,27,"Answer :");
     mvwaddstr(win, 19,27,"--------------------------------");
 
+    
     srand(time(NULL));
     for(i=0; i<3; i++)
         num[i]=(rand()%4)+1;

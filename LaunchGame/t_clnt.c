@@ -53,13 +53,6 @@ int cursor_y=33;
 WINDOW *window;
 
 int set_ticker(int);
-void viewB(int, int);
-void viewM(int, int);
-void move_msg(int);
-void setW();
-void setM();
-void gauge(int);
-void minimap();
 void AvoidX(WINDOW *win);
 void AvoidX_keyboard(WINDOW *win);
 void move_x(int signum);
@@ -70,7 +63,6 @@ void start_point();
 void * send_msg(void * arg);
 void * recv_msg(void * arg);
 void gameBoard();
-void * signal_msg(void *arg);
 void error_handling(char * msg);
 	
 	
@@ -106,17 +98,6 @@ int main(int argc, char *argv[])
 	pthread_join(rcv_thread, &thread_return);
 	close(sock);  
 	return 0;
-}
-
-void *signal_msg(void *arg){
-	struct sigaction act;
-	sigset_t newmask;
-	sigemptyset(&newmask);
-	sigaddset(&newmask, SIGALRM);
-	act.sa_handler=move_msg;
-	sigaction(SIGALRM, &act, NULL);
-	pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
-	return NULL;
 }
 
 void gameBoard(){
@@ -164,21 +145,23 @@ void gameBoard(){
 	
 	while(true){
 		c = getch();
-		if(c == 'w') {r_dir = -1; c_dir = 0;}
-		if(c == 's') {r_dir = 1; c_dir = 0;}
-		if(c == 'a') {c_dir = -1; r_dir = 0;}
-		if(c == 'd') {c_dir = 1; r_dir = 0;}
-		if(c == 'm'){
+		if(c == 'w') {r_dir = -1; c_dir = 0;}//go upward
+		if(c == 's') {r_dir = 1; c_dir = 0;}// go down
+		if(c == 'a') {c_dir = -1; r_dir = 0;}//go to left
+		if(c == 'd') {c_dir = 1; r_dir = 0;}// go to right
+		if(c == 'm'){//play mission
 			if(MAP[row][col]=='M'){
 				MAP[row][col]=BLANK;
 				clear();
 				signal(SIGALRM, SIG_IGN);
 				touchwin(window);
+
+				//AvoidX mission is only one chance!
 				if(weapon==0)
 					mission_num = rand()%3;
 				else
 					mission_num=(rand()%2)+1;
-			
+				//start random mission
 				switch(mission_num){
 					case 0:
 						mission_row=11; mission_col=45;
@@ -249,6 +232,7 @@ void * recv_msg(void * arg)
 		own.p_row = data.p_row;
 		own.win=data.win;
 
+		//who is win?
 		if(own.win!=-1){
 			signal(SIGALRM,SIG_IGN);
 			if(own.win==P){
@@ -261,8 +245,10 @@ void * recv_msg(void * arg)
 				break;
 			}
 		}
+		//pop past police location in map
 		MAP[past_r][past_c] = ' ';
 
+		//put police location in map
 		past_r = data.p_row;
 		past_c = data.p_col;
 
@@ -271,6 +257,7 @@ void * recv_msg(void * arg)
 	return NULL;
 }
 
+//set start point
 void start_point(){
 	int n;
 	srand(time(NULL));
@@ -286,6 +273,7 @@ void error_handling(char *msg)
 	exit(1);
 }
 
+//clear past view
 void viewB(int r, int c){
 	r = r-1;
 	c = c-1;
@@ -297,6 +285,7 @@ void viewB(int r, int c){
 	}
 }
 
+//set viewsight
 void viewM(int r, int c){
 	r = r - 1;
 	c = c - 1;
@@ -317,9 +306,11 @@ void viewM(int r, int c){
 	}
 }
 
+//move player
 void move_msg(int signum){
 	signal(SIGALRM, move_msg);
 	
+	//player can't pass the wall
 	if (c_dir == -1 && MAP[row][col - 1] == '*')
 		c_dir = 0;
 	if(c_dir == 1 && MAP[row][col + 1] == '*')
@@ -344,6 +335,7 @@ void move_msg(int signum){
 	wrefresh(stdscr);
 }
 
+//setting wall in map
 void setW(){
 	for(int i=0;i<25;i++){
 		for(int j=0;j<47;j++){
@@ -363,12 +355,14 @@ void setW(){
 	}
 }
 
+//setting mission in map
 void setM(){
 	for(int i=0;i<6;i++){
 		MAP[mission[i][0]][mission[i][1]] = 'M';
 	}
 }
 
+//show gaugebar
 void gauge(int mis){
 	move(1,56);
 	addstr("!Mission Gauge!");
@@ -384,10 +378,12 @@ void gauge(int mis){
 	move(3,54);
 	hline('/', 2*mis);
 
+	//if mission gauge exceeds 10, the theif wins.
 	if (mis >= 10)
 		own.win=T;
 }
 
+//show minimap
 void minimap(){
 	for(int i=0;i<161;i++){
 		mvaddch(miniwall[i][0]+5,miniwall[i][1]+48,'*');
@@ -401,6 +397,8 @@ void minimap(){
 void AvoidX(WINDOW *window){
     int i;
     basic(window,"Avoid X", 3);
+
+	//set FINISHLINE
     for(i=4; i<20; i++)
         movingcursor(window,i, 68, '#', 1);
     mvwaddch(window,6,69,'F');
@@ -420,6 +418,7 @@ void AvoidX(WINDOW *window){
     signal(SIGALRM, move_x);
 }
 
+//moving player
  void AvoidX_keyboard(WINDOW *window){
     char c;
     while(meet==0){
@@ -438,7 +437,7 @@ void AvoidX(WINDOW *window){
 			case 'd':
 				if(cursor_y<69)
 					cursor_y+=1;
-				if(cursor_y>=69){
+				if(cursor_y>=69){//if reach the finishline
 					movingcursor(window,cursor_x, cursor_y, BLANK, 1);
 					winner(window);
 					own.mis_gauge+=5; 
@@ -463,6 +462,7 @@ void AvoidX(WINDOW *window){
 	return;
 }
 
+//checking player is hit by shuriken
 void x_position(WINDOW *window,int mission_row, int mission_col, char x){
     int i; 
     mvwaddch(window, mission_row, mission_col, x);                                          

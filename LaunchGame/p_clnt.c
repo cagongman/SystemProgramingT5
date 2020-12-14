@@ -45,14 +45,6 @@ int col;
 int r_dir;
 int c_dir;
 
-int set_ticker(int);
-void viewB(int, int);
-void viewM(int, int);
-void move_msg(int);
-void setW();
-void setM();
-void gauge(int);
-void minimap();
 void start_point();
 
 void * send_msg(void * arg);
@@ -62,6 +54,7 @@ void * signal_msg(void *arg);
 void error_handling(char * msg);
 	
 int mis=0;
+
 int main(int argc, char *argv[])
 {
 	int sock;
@@ -93,17 +86,6 @@ int main(int argc, char *argv[])
 	pthread_join(rcv_thread, &thread_return);
 	close(sock);  
 	return 0;
-}
-
-void *signal_msg(void *arg){
-	struct sigaction act;
-	sigset_t newmask;
-	sigemptyset(&newmask);
-	sigaddset(&newmask, SIGALRM);
-	act.sa_handler=move_msg;
-	sigaction(SIGALRM, &act, NULL);
-	pthread_sigmask(SIG_UNBLOCK, &newmask, NULL);
-	return NULL;
 }
 
 void gameBoard(){
@@ -193,6 +175,7 @@ void * recv_msg(void * arg)
 		own.mis_gauge=data.mis_gauge;
 		own.win=data.win;
 
+		//who is win?
 		if(own.win!=-1){
 			signal(SIGALRM,SIG_IGN);
 			if(own.win==T){
@@ -205,8 +188,11 @@ void * recv_msg(void * arg)
 				break;
 			}
 		}
+		
+		//pop past theif location in map
 		MAP[past_r][past_c] = ' ';
 
+		//put theif location in map
 		past_r = data.t_row;
 		past_c = data.t_col;
 
@@ -222,6 +208,7 @@ void error_handling(char *msg)
 	exit(1);
 }
 
+//clear past view
 void viewB(int r, int c){
 	r = r-2;
 	c = c-2;
@@ -233,6 +220,7 @@ void viewB(int r, int c){
 	}
 }
 
+//set viewsight
 void viewM(int r, int c){
 	r = r-2;
 	c = c-2;
@@ -250,9 +238,11 @@ void viewM(int r, int c){
 	}
 }
 
+//move player
 void move_msg(int signum){
 	signal(SIGALRM, move_msg);
 	
+	//player cannot pass the wall
 	if (c_dir == -1 && MAP[row][col - 1] == '*')
 		c_dir = 0;
 	if(c_dir == 1 && MAP[row][col + 1] == '*')
@@ -277,7 +267,7 @@ void move_msg(int signum){
 	refresh();
 }
 
-
+//setting wall in map
 void setW(){
 	for(int i=0;i<25;i++){
 		for(int j=0;j<47;j++){
@@ -297,6 +287,14 @@ void setW(){
 	}
 }
 
+//setting mission in map
+void setM(){
+	for(int i=0;i<6;i++){
+		MAP[mission[i][0]][mission[i][1]] = 'M';
+	}
+}
+
+//setting startpoint
 void start_point(){
 	int n;
 	srand(time(NULL));
@@ -305,12 +303,7 @@ void start_point(){
 	ball_start_col=44;
 }
 
-void setM(){
-	for(int i=0;i<6;i++){
-		MAP[mission[i][0]][mission[i][1]] = 'M';
-	}
-}
-
+//show gaugebar
 void gauge(int mis){
 	move(1,56);
 	addstr("!Mission Gauge!");
@@ -327,6 +320,7 @@ void gauge(int mis){
 	hline('/', 2*mis);
 }
 
+//show minimap
 void minimap(){
 	for(int i=0;i<161;i++){
 		mvaddch(miniwall[i][0]+5,miniwall[i][1]+48,'*');
