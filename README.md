@@ -58,6 +58,9 @@ If thief client meets 'M' while moving, the thief can do the mission. There are 
 | A Brave Ninza (표창피하기) | 5 score |
 
 - Four Operation (사칙연산)
+	<p align="center">
+	<img src=https://user-images.githubusercontent.com/42794463/132095811-0c19d62f-1ab6-4b5d-a845-f3a25b5e2ff8.PNG/>
+</p>
   - The thief client wins if he/she enters the correct answer according to the given random arithmetic expression.
     
 - Rock Scissor Papaer (가위바위보)
