@@ -59,7 +59,7 @@ If thief client meets 'M' while moving, the thief can do the mission. There are 
 
 - Four Operation (사칙연산)
 	<p align="center">
-	<img src=https://user-images.githubusercontent.com/42794463/132095811-0c19d62f-1ab6-4b5d-a845-f3a25b5e2ff8.PNG/>
+	<img src=https://user-images.githubusercontent.com/42794463/132095912-5f81ac53-dcc8-4774-98e7-837cf90b99c2.png/>
 </p>
   - The thief client wins if he/she enters the correct answer according to the given random arithmetic expression.
     
