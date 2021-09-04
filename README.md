@@ -1,6 +1,10 @@
 # Chase of Guards and Thieves Game
 ![Build Status](https://img.shields.io/badge/-c-brightgreen)    ![Build Status](https://img.shields.io/badge/-shell-yellow) ![Build Status](https://img.shields.io/badge/-socket.h-lightgrey) ![Build Status](https://img.shields.io/badge/-pthread.h-lightgrey) ![Build Status](https://img.shields.io/badge/-ncurse.h-lightgrey)  
-                                    ![logo](https://user-images.githubusercontent.com/42794463/132095811-0c19d62f-1ab6-4b5d-a845-f3a25b5e2ff8.PNG)
+                                    <p align="center">
+	<img src="https://user-images.githubusercontent.com/42794463/132095811-0c19d62f-1ab6-4b5d-a845-f3a25b5e2ff8.PNG"/>
+</p>
+                                    
+                                 
 ## How to launch Game
 ### 1.Installation
 ```sh
