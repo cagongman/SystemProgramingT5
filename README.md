@@ -20,6 +20,7 @@ make -f makethief.mk
 ## About Game
 ### 1. Rule of Game
 ### 2. About Map
+| ![map-of-thief](https://user-images.githubusercontent.com/42794463/132094185-b79f7f4c-855a-4eee-8b77-b7ad1554b23e.png) | |
 ### 3. About Mission
 If thief client meets M while moving, the thief can do the mission. There are 3 types of missions, and the total number of missions in the game is 6. If the thief gets 10 points, he/she wins!
 | Mission | Score |
