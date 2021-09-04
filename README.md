@@ -31,11 +31,14 @@ If thief client meets M while moving, the thief can do the mission. There are 3 
 | A Brave Ninza (표창피하기) | 5 score |
 
 - Four Operation (사칙연산)
+  ![mission-4op](https://user-images.githubusercontent.com/42794463/132094402-5a67d51e-19d4-4bc2-969f-b0e013cf70b2.png)
   - The thief client wins if he/she enters the correct answer according to the given random arithmetic expression.
     
 - Rock Scissor Papaer (가위바위보)
+  ![mission-rcp](https://user-images.githubusercontent.com/42794463/132094406-071d3227-be2c-46c4-a4b3-4f9d44abfb2c.png)
   - Move ROCK, SCISSOR, PAPER with ‘a’, ‘d’ arrow keys and press ‘e’ to start the mission. A random number is generated against the thief's input to determine server's rock-paper-scissors hand. If the match between the server and the thief is a draw, start over.
 - A Brave Ninza (표창피하기)
+  ![mission-ninza](https://user-images.githubusercontent.com/42794463/132094585-522bef92-9351-4fc0-a5b0-35f540af8fb7.png)
   - The thief client's current location is marked with an 'o' . Weapons are marked with an 'x' to move. The 'x' weapons move in the left direction. The thief client('o') must reach the FINISH LINE without touching the weapon('x') 
 ## Tech
 
